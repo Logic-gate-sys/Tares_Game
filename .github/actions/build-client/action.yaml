@@ -10,9 +10,11 @@ runs:
           node-version: 24.22
       - run: npm ci 
         shell: bash 
-      - run: npm run build 
+        working-directory: web-client
+      - run: npx vite build
         shell: bash 
+        working-directory: web-client
       - uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: dist/
+          path: web-client/dist/

@@ -231,6 +231,8 @@ paths:
         - `PAUSE_GAME`
         - `RESUME_GAME`
         - `SEND_WORD`
+        - `RESTART_GAME` (owner only, after the match finishes)
+        - `LEAVE_GAME` (return the player to the lobby)
       security:
         - bearerAuth: []
         - queryToken: []

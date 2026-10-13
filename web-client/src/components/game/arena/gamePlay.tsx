@@ -9,10 +9,12 @@ interface GameplayArenaProps {
   scramble?: string;
   onStart: () => void;
   onPause: () => void;
+  onRestart: () => void;
+  onLeave: () => void;
   onSubmit: (word: string) => void;
 }
 
-export const GameplayArena = ({ isOwner, status, timeLeft = 0, round = 0, message, scramble, onStart, onPause, onSubmit }: GameplayArenaProps) => {
+export const GameplayArena = ({ isOwner, status, timeLeft = 0, round = 0, message, scramble, onStart, onPause, onRestart, onLeave, onSubmit }: GameplayArenaProps) => {
   const [inputValue, setInputValue] = useState('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,10 +31,10 @@ export const GameplayArena = ({ isOwner, status, timeLeft = 0, round = 0, messag
   const isLowTime = timeLeft < 10;
 
   return (
-    <section className="md:col-span-6 space-y-xl flex flex-col items-center">
+    <section className="md:col-span-6 rounded-2xl border-4 border-deep-ink bg-paper-white/70 p-4 shadow-[8px_8px_0px_0px_rgba(18,23,33,1)] backdrop-blur-sm sm:p-6 lg:p-8 space-y-lg flex flex-col items-center">
       {/* Game Clock */}
-      <div className="inline-flex md:grid grid-cols-[1fr_0.5fr] gap-md">
-        <div className={`text-paper-white px-lg py-sm border-4 border-deep-ink neubrutal-shadow transform -rotate-1 ${isLowTime ? 'bg-action-red' : 'bg-deep-ink'}`}>
+      <div className="w-full grid grid-cols-1 gap-md md:grid-cols-[1fr_auto]">
+        <div className={`text-paper-white px-lg py-md border-4 border-deep-ink neubrutal-shadow ${isLowTime ? 'bg-action-red' : 'bg-deep-ink'}`}>
           <span className="font-label-mono text-label-mono uppercase tracking-[0.2em]">{`Round ${round}/${3} • ${status}`}</span>
           <div className="text-display-lg font-display-lg-mobile md:text-display-lg leading-none">
             {formatTime(timeLeft)}
@@ -40,8 +42,17 @@ export const GameplayArena = ({ isOwner, status, timeLeft = 0, round = 0, messag
           {message && <div className="text-xs font-bold">{message}</div>}
         </div>
 
-        <div className="text-paper-white px-md py-md border-4 border-deep-ink neubrutal-shadow transform -rotate-1 bg-green-800">
-          {isOwner ? (
+        <div className="text-paper-white px-md py-md border-4 border-deep-ink neubrutal-shadow bg-green-800">
+          {status === 'FINISHED' && isOwner ? (
+            <div className="flex flex-col gap-2">
+              <button className="px-4 py-2 text-sm font-display-lg-mobile md:text-lg leading-none border-2 border-deep-ink bg-paper-white text-deep-ink transition-transform active:scale-95" onClick={onRestart}>
+                ARRANGE ANOTHER MATCH
+              </button>
+              <button className="px-4 py-2 text-sm font-display-lg-mobile md:text-lg leading-none border-2 border-deep-ink bg-action-red text-paper-white transition-transform active:scale-95" onClick={onLeave}>
+                RETURN TO LOBBY
+              </button>
+            </div>
+          ) : isOwner ? (
             <div className="flex flex-col gap-2">
               <button
                 className="px-4 py-2 text-sm font-display-lg-mobile md:text-lg leading-none border-2 border-deep-ink bg-paper-white text-deep-ink transition-transform active:scale-90 disabled:cursor-not-allowed disabled:opacity-60"
@@ -64,7 +75,7 @@ export const GameplayArena = ({ isOwner, status, timeLeft = 0, round = 0, messag
                 Game status
               </span>
               <span className="text-lg font-headline-md leading-none">
-                {status === 'PAUSED' ? 'GAME PAUSED' : status === 'WAITING' ? 'WAITING' : 'GAME STARTED'}
+                {status === 'FINISHED' ? 'MATCH COMPLETE' : status === 'PAUSED' ? 'GAME PAUSED' : status === 'WAITING' ? 'WAITING' : 'GAME STARTED'}
               </span>
             </div>
           )}
@@ -72,7 +83,7 @@ export const GameplayArena = ({ isOwner, status, timeLeft = 0, round = 0, messag
       </div>
 
       {/* The Scrambled Word */}
-      <div className="w-full flex flex-wrap justify-center gap-sm md:gap-sm py-xl min-h-40 items-center">
+      <div className="w-full rounded-xl border-2 border-deep-ink/20 bg-sky-blue/60 flex flex-wrap justify-center gap-sm md:gap-sm py-xl min-h-40 items-center">
         {(scramble||'------').split('').map((letter, index) => (
           <LetterTile key={`${letter}-${index}`} letter={letter} delay={`${index / 10}s`} />
         ))}

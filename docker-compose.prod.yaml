@@ -1,5 +1,19 @@
 services:
+  user-db:
+    image: postgres:17-alpine
+    profiles: ["prod"]
+
+  game-db:
+    image: postgres:17-alpine
+    profiles: ["prod"]
+
+  redis:
+    image: redis:7-alpine
+    profiles: ["prod"]
+
   user-service:
+    image: ${USER_SERVICE_IMAGE:-ghcr.io/logic-gate-sys/tares-user-service:latest}
+    build: null
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${USER_DB_USER:?USER_DB_USER must be set}:${USER_DB_PASSWORD:?USER_DB_PASSWORD must be set}@user-db:5432/${USER_DB_NAME:?USER_DB_NAME must be set}
@@ -8,6 +22,8 @@ services:
     profiles: ["prod"]
 
   wss-service:
+    image: ${WSS_SERVICE_IMAGE:-ghcr.io/logic-gate-sys/tares-wss-service:latest}
+    build: null
     environment:
       WSS_PORT: 8081
       DATABASE_URL: postgresql://${GAME_DB_USER:?GAME_DB_USER must be set}:${GAME_DB_PASSWORD:?GAME_DB_PASSWORD must be set}@game-db:5432/${GAME_DB_NAME:?GAME_DB_NAME must be set}?sslmode=disable

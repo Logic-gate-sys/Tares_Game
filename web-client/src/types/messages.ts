@@ -25,7 +25,7 @@ export type ClientMessage =
   // in game messages
   | {
     type: 'in:game', payload:
-    | { action: 'START_GAME' | 'PAUSE_GAME' | 'RESUME_GAME', value: { userId: number } }
+    | { action: 'START_GAME' | 'PAUSE_GAME' | 'RESUME_GAME' | 'RESTART_GAME' | 'LEAVE_GAME', value: { userId: number } }
     | { action: 'SEND_WORD', value: { word: string } }
   }
 

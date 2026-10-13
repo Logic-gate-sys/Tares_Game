@@ -4,19 +4,12 @@ import (
 	"bufio"
 	"crypto"
 	"fmt"
+	"github.com/logic-gate-sys/wss_service/internals/dictionary"
+	"github.com/logic-gate-sys/wss_service/internals/events"
 	"math/rand/v2"
 	"strings"
 	"time"
-	"github.com/logic-gate-sys/wss_service/internals/dictionary"
-	"github.com/logic-gate-sys/wss_service/internals/events"
 )
-
-/*
-  Philosophy of the game: "Hit db less, worry less about db letency"
-  Data base is updated after the game:
-  - limit db inserts to reduce latency
-  - When a user quits or game ends abruptly , all score for the game maybe lost
-*/
 
 type GameEngineInterface interface {
 	UserScoreWord(word string, diff Difficulty) (float32, error)
@@ -85,6 +78,7 @@ func (g *Game) StartRound() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	if len(words) == 0 {
 		return "", fmt.Errorf("dictionary does not contain playable words")
 	}
@@ -99,6 +93,17 @@ func (g *Game) StartRound() (string, error) {
 	g.ActiveRoom.UsedWords = make(map[string]string)
 	g.ActiveRoom.WordCounts = make(map[string]int)
 	return g.ScrambledWord, nil
+}
+
+func (g *Game) ResetGame() {
+	g.mux.Lock()
+	defer g.mux.Unlock()
+
+	g.CurrentWord = ""
+	g.ScrambledWord = ""
+	g.ActiveRoom.UsedWords = make(map[string]string)
+	g.ActiveRoom.Scores = make(map[string]int)
+	g.ActiveRoom.WordCounts = make(map[string]int)
 }
 
 // ScoreSubmission validates a word, rejects duplicate submissions for the

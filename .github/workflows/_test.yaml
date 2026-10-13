@@ -18,8 +18,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24.22
+          cache: npm
+          cache-dependency-path: web-client/package-lock.json
       - run: npm ci
-      - run: npm test
+        working-directory: web-client
+      - run: npm test -- --run
+        working-directory: web-client
 
   test-backend:
     if: ${{inputs.run_backend}}
@@ -30,6 +34,8 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: 1.26
-      - run: go mod download
-      # Test with folder structure specify
-      - run: go test -v ./...
+          cache-dependency-path: backend_platform/wss_microservice/go.sum
+      - run: go test ./...
+        working-directory: backend_platform/wss_microservice
+      - run: go test -race ./...
+        working-directory: backend_platform/wss_microservice

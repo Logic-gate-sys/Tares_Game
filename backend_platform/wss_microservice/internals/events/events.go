@@ -18,11 +18,13 @@ const (
 type GameRoomAction string
 
 const (
-	StartGame  GameRoomAction = "START_GAME"
-	SendWord   GameRoomAction = "SEND_WORD"
-	PauseGame  GameRoomAction = "PAUSE_GAME"
-	StopGame   GameRoomAction = "STOP_GAME"
-	ResumeGame GameRoomAction = "RESUME_GAME"
+	StartGame   GameRoomAction = "START_GAME"
+	SendWord    GameRoomAction = "SEND_WORD"
+	PauseGame   GameRoomAction = "PAUSE_GAME"
+	StopGame    GameRoomAction = "STOP_GAME"
+	ResumeGame  GameRoomAction = "RESUME_GAME"
+	RestartGame GameRoomAction = "RESTART_GAME"
+	LeaveGame   GameRoomAction = "LEAVE_GAME"
 )
 
 type InlobbyUserAction struct {

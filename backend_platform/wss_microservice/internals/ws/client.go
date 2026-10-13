@@ -6,19 +6,18 @@ import (
 	"strconv"
 	"sync/atomic"
 	"time"
-
 	"github.com/gorilla/websocket"
 	"github.com/logic-gate-sys/wss_service/internals/events"
 )
 
-// Holds the state of any connected device (e.g browser, terminal) at any time
+
 type client struct {
 	name                 string // connect client's name
 	UserId               int32
 	socket               *websocket.Conn // socket connection by which the client communicates over the network
 	inLobbyToClientEvent chan events.LobbyStateBroadcast
 	inGameToClientEvent  chan events.GameStateBroadcast //messages going from server to client
-	room                 *PlayerRoom
+	room                 *GameRoom // Active game room client is currently connected to. 
 	manager              *roomManager
 	pingStartedAt        atomic.Int64
 	pingMilliseconds     atomic.Int64

@@ -1,78 +1,76 @@
-# # .github/workflows/ci.yml — Stable stage, segment 10
-# # PR validation. Calls the reusable build workflow. Does not deploy.
+name: CI
 
-# name: CI
-
-# on:
-#     pull_request:
-#         branches: [main, feature]
-
-# # in pull request the latest pull request wins
-# concurrency:
-#     group: ci-${{ github.event.pull_request.number }}
-#     cancel-in-progress: true
-
-# jobs:
-#     run-all-tests:
-#         uses: ./.github/workflows/_test.yaml
-#     build:
-#         needs: run-all-tests
-#         uses: ./.github/workflows/_build.yaml
-
-
-
-name: Main CI/CD Pipeline
-on: 
-  push: 
-    branches: [main]
+on:
+  workflow_call:
   pull_request:
-    branches: [main] 
-  workflow_dispatch: # to keep the run action button manually in github
+    branches: [main, staging]
+  push:
+    branches: [main, staging]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
-  detect-changes:
-      runs-on: ubuntu-latest
-      outputs:
-        frontend: ${{ steps.filter.outputs.frontend }}
-        backend: ${{ steps.filter.outputs.backend }}
-      steps:
-        - uses: actions/checkout@v4
-        - uses: dorny/paths-filter@v3
-          id: filter
-          with:
-            filters: |
-              frontend:
-                - 'web-client/**' # folder of client
-              backend:
-                - 'server/**' # Folder of server
+  frontend:
+    name: Frontend checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web-client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web-client/package-lock.json
+      - run: npm ci
+      - run: npm test -- --run
+      - run: npx vite build
 
-  test-phase:
-    needs: detect-changes
-    uses: ./.github/workflows/_test.yaml
-    with:
-      run_frontend: ${{ needs.detect-changes.outputs.frontend == 'true' }}
-      run_backend: ${{ needs.detect-changes.outputs.backend == 'true' }}
-    
-  build-phase:
-    needs: [detect-changes, test-phase]
-    uses: ./.github/workflows/_build.yaml
-    with:
-      run_frontend: ${{ needs.detect-changes.outputs.frontend == 'true' }}
-      run_backend: ${{ needs.detect-changes.outputs.backend == 'true' }}
-    
-  deploy-phase:
-    needs: build-phase
-    # Only deploy if the code was actually merged into main
-    if: github.event_name == 'push' 
-    uses: ./.github/workflows/deploy.yaml
-    with:
-      run_frontend: ${{ needs.detect-changes.outputs.frontend == 'true' }}
-      run_backend: ${{ needs.detect-changes.outputs.backend == 'true' }}
-      environment: production
-    secrets:
-      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      ec2-host: ${{ secrets.EC2_HOST }}
-      ec2-ssh-key: ${{ secrets.EC2_SSH_KEY }}
-      ec2-username: ${{secrets.EC2_USERNAME}}
-      aws-region: ${{secrets.AWS_REGION}}
+  user-service:
+    name: User service checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend_platform/user_microservice
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend_platform/user_microservice/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test -- --run
+
+  wss-service:
+    name: WSS service checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend_platform/wss_microservice
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: backend_platform/wss_microservice/go.sum
+      - run: go test ./...
+      - run: go test -race ./...
+      - run: go build ./...
+
+  docker:
+    name: Validate backend images
+    needs: [user-service, wss-service]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f backend_platform/user_microservice/Dockerfile -t tares-user-service:test .
+      - run: docker build -f backend_platform/wss_microservice/Dockerfile -t tares-wss-service:test backend_platform/wss_microservice

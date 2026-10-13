@@ -1,20 +1,19 @@
-name: 'Build Go Server'
-description: 'Installs dependencies and compiles the Go binary'
+name: 'Build backend containers'
+description: 'Builds the user and WebSocket service containers'
 
 
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-go@v5 # setup-go@v5 automatically handles dependency caching
+    - uses: docker/build-push-action@v6
       with:
-        go-version: 1.26 
-    - run: go mod download
-      shell: bash
-    - run: |
-        mkdir -p bin
-        go build -o bin/server ./server/main.go
-      shell: bash
-    - uses: actions/upload-artifact@v4
+        context: .
+        file: backend_platform/user_microservice/Dockerfile
+        tags: tares-user-service:ci
+        load: true
+    - uses: docker/build-push-action@v6
       with:
-        name: bin
-        path: bin/
+        context: backend_platform/wss_microservice
+        file: backend_platform/wss_microservice/Dockerfile
+        tags: tares-wss-service:ci
+        load: true

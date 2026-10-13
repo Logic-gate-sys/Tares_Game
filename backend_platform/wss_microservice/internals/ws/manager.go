@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/logic-gate-sys/wss_service/internals/engine"
@@ -25,30 +26,31 @@ type LobbyAction struct {
 	Action events.InlobbyUserAction
 }
 
-type roomManager struct {
-	sync.RWMutex
-	grpcClient     *grpc.UserGRPCClient
-	rooms          map[string]*PlayerRoom // map of all rooms in this manager
-	lobbyClients   map[*client]bool       // all clients with no rooms yet
-	lobbyLeave     chan *client
-	lobbyJoin      chan *client // client with no room joins room manaer through this
-	lobbyInbound   chan LobbyAction
-	roomStore      *store.PostGresRoomStore
-	pendingJoins   map[string]*pendingJoin
-	userServiceURL string
-	runOnce        sync.Once
-}
-
 type pendingJoin struct {
 	requester *client
 	roomID    string
 	ownerID   int
 }
 
+type roomManager struct {
+	sync.RWMutex
+	grpcClient     *grpc.UserGRPCClient
+	rooms          map[string]*GameRoom // All available rooms online
+	lobbyClients   map[*client]bool       // all clients with no rooms yet
+	roomStore      *store.PostGresRoomStore
+	pendingJoins   map[string]*pendingJoin
+	userServiceURL string
+
+	lobbyLeave   chan *client
+	lobbyJoin    chan *client // client with no room joins room manaer through this
+	lobbyInbound chan LobbyAction
+	runOnce      sync.Once
+}
+
 func NewRoomManager(roomStore *store.PostGresRoomStore, grpcClient *grpc.UserGRPCClient) *roomManager {
 	return &roomManager{
 		grpcClient:     grpcClient,
-		rooms:          make(map[string]*PlayerRoom),
+		rooms:          make(map[string]*GameRoom),
 		lobbyClients:   make(map[*client]bool),
 		lobbyJoin:      make(chan *client),
 		lobbyLeave:     make(chan *client),
@@ -59,15 +61,14 @@ func NewRoomManager(roomStore *store.PostGresRoomStore, grpcClient *grpc.UserGRP
 	}
 }
 
-// manages lobby state(joining, leaving, discovering rooms)
+// Manages all lobby interactions of client. First handle client's room room search and subsequent join.
+// This function also handles room join requests and response cycle between users.
 func (rm *roomManager) Run() {
-	// the loop
 	for {
 		select {
 		// when client joins lobby channel
 		case client := <-rm.lobbyJoin:
 			rm.lobbyClients[client] = true
-			// also search for all rooms in lobby give client results
 			ctx := context.Background()
 			rooms, err := rm.roomStore.GetAllRooms(ctx)
 			if err != nil {
@@ -81,17 +82,17 @@ func (rm *roomManager) Run() {
 			rm.broadCastLobbyEventToClientNB(client, event)
 			log.Printf("Client: %s joined lobby", client.name)
 
-		// TODO: Find a way to ensure room owner client is last to leave lobby(
+		// INFO: Find a way to ensure room owner client is last to leave lobby(
 		// this client need to accepts others into his room/ start , initial game)
 		case client := <-rm.lobbyLeave:
 			delete(rm.lobbyClients, client)
 			close(client.inLobbyToClientEvent)
 			log.Printf("Client: %s left lobby", client.name)
 
-		// if an event is sent to lobby
+		// Lobby inbound events that arrive from clients
+		// All lobby inbound incoming events are handled here: Room request cycle etc
 		case action := <-rm.lobbyInbound:
 			switch action.Action.Action {
-			// room creation, updating and deleting are handled outside websocket, in api routes
 			case events.JoinRoom:
 				var payload struct {
 					RoomId string `json:"roomId"`
@@ -102,7 +103,7 @@ func (rm *roomManager) Run() {
 				}
 				room, err := rm.roomStore.GetRoomById(context.Background(), payload.RoomId)
 				if err != nil {
-					log.Println("Error(wss): ", err.Error())
+					log.Println(err.Error())
 					break
 				}
 				ownerID, parseErr := strconv.Atoi(room.OwnerId)
@@ -125,10 +126,9 @@ func (rm *roomManager) Run() {
 					playerRoom.join <- action.Client
 					break
 				}
-
+        // When requester is not room owner, fetch user stats to send to room owner client 
 				stats, err := rm.grpcClient.GetUserStats(context.Background(), action.Client.UserId)
 				if err != nil {
-					// inform client their request did not go through
 					log.Println("Failed to load requester stats:", err)
 					event := events.LobbyStateBroadcast{
 						Which: events.JoinResponse,
@@ -137,7 +137,7 @@ func (rm *roomManager) Run() {
 					rm.broadCastLobbyEventToClientNB(action.Client, event)
 					break
 				}
-				// compute request details to send to room:0wner
+
 				petition := events.PetitionRequest{
 					ID:             uuid.New().String(),
 					RoomID:         payload.RoomId,
@@ -162,13 +162,13 @@ func (rm *roomManager) Run() {
 						event := events.LobbyStateBroadcast{
 							Which:   events.IncomingJoinRequest,
 							Data:    petition,
-							Message: "A player is requesting to join your room",
+							Message: "A player is requesting to join your game room",
 						}
 						rm.broadCastLobbyEventToClientNB(client, event)
 						break
 					}
 				}
-
+      // When a players join request is resolved/cancelled
 			case events.ResolveJoin:
 				var payload struct {
 					RequestID string `json:"requestId"`
@@ -182,7 +182,6 @@ func (rm *roomManager) Run() {
 					break
 				}
 				delete(rm.pendingJoins, payload.RequestID)
-				// if resolved action is to deny requestor
 				if !payload.Accepted {
 					event := events.LobbyStateBroadcast{
 						Which: events.JoinResponse,
@@ -195,7 +194,6 @@ func (rm *roomManager) Run() {
 				if err != nil {
 					break
 				}
-				// admit requestor in room
 				err, playerRoom := rm.joinRoom(pending.requester, room)
 				if err != nil {
 					event := events.LobbyStateBroadcast{
@@ -205,30 +203,29 @@ func (rm *roomManager) Run() {
 					rm.broadCastLobbyEventToClientNB(pending.requester, event)
 					break
 				}
-				// remove requester from lobby and put him in playerRoom.
+				// remove requester from lobby and put him on playerRoom join channel.
 				delete(rm.lobbyClients, pending.requester)
-				// put accepted requester on join channel
 				playerRoom.join <- pending.requester
+				break
 			}
 		}
 	}
 }
 
-// Joins succeful user to requested room
-func (rm *roomManager) joinRoom(c *client, room store.RoomViewModel) (error, *PlayerRoom) {
-	//  if room is full and it's not null
+// This function joins a client to an active game-room. Client may be room owner. 
+// Make sure to only execute a room's Run function once. 
+func (rm *roomManager) joinRoom(c *client, room store.RoomViewModel) (error, *GameRoom) {
+	//  When room is full or client already in room 
 	if room.Capacity > 0 && rm.rooms[room.ID] != nil && len(rm.rooms[room.ID].Clients) >= room.Capacity {
-		return fmt.Errorf("room is full"), nil
+		return fmt.Errorf("Can't join room, please try again later"), nil
 	}
-
 	playerRoom := rm.rooms[room.ID]
-	// if player room is not in-memory, create and run it's engine once
 	if playerRoom == nil {
 		ownerID, err := strconv.Atoi(room.OwnerId)
 		if err != nil {
 			return err, nil
 		}
-		playerRoom = &PlayerRoom{
+		playerRoom = &GameRoom{
 			Room: store.CreateRoom{
 				Id:                 room.ID,
 				OwnerId:            ownerID,
@@ -253,17 +250,15 @@ func (rm *roomManager) joinRoom(c *client, room store.RoomViewModel) (error, *Pl
 		rm.rooms[room.ID] = playerRoom
 		go playerRoom.Run()
 	}
-	// assign client game room
+	
 	c.room = playerRoom
-	//broadcast to client
-	event := events.LobbyStateBroadcast{
-		Which: events.JoinResponse,
-		Data: map[string]any{
-			"accepted": true,
-			"room":     room,
-			"message":  fmt.Sprintf("Success!, welcome to game room: %s", room.Name)},
-	}
-	rm.broadCastLobbyEventToClientNB(c, event)
+	// rm.broadCastLobbyEventToClientNB(c, events.LobbyStateBroadcast{
+	// 	Which: events.JoinResponse,
+	// 	Data: map[string]any{
+	// 		"accepted": true,
+	// 		"room":     room,
+	// 		"message":  fmt.Sprintf("Success!, welcome to game room: %s", room.Name)},
+	// })
 	return nil, playerRoom
 }
 
@@ -288,16 +283,14 @@ func (rm *roomManager) broadCastLobbyEventToClientNB(c *client, event events.Lob
 	}
 }
 
-// upgrade http request into a websocket connection
+// Upgrades http request into a websocket connection, join client to lobby and start the lobby run 
+// and client's pump functions
 func (rm *roomManager) HandleWS(w http.ResponseWriter, r *http.Request) {
-	// get authenticated user
 	user := middleware.GetUser(r)
-	// upgrade http request
 	socket, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		panic("Socket upgrade failed ")
 	}
-	// Create client from authenticated user
 	client := &client{
 		name:                 user.Username,
 		UserId:               int32(user.ID),
@@ -306,10 +299,8 @@ func (rm *roomManager) HandleWS(w http.ResponseWriter, r *http.Request) {
 		inGameToClientEvent:  make(chan events.GameStateBroadcast, 10),
 		manager:              rm,
 	}
-	// run room & put client on lobbyJoin chan
 	rm.runOnce.Do(func() { go rm.Run() })
 	rm.lobbyJoin <- client
-	// start client read & write pumps
 	go client.writeToClientPump()
 	go client.readFromClientPump()
 }
