@@ -5,7 +5,6 @@ import (
 	"log"
 	"strconv"
 	"time"
-
 	"github.com/logic-gate-sys/wss_service/internals/engine"
 	"github.com/logic-gate-sys/wss_service/internals/events"
 	"github.com/logic-gate-sys/wss_service/internals/store"
@@ -34,6 +33,9 @@ type GameRoom struct {
 	Clients map[*client]bool `json:"clients"`
 	inboundEvents  chan events.IngameUserAction
 	outBoundEvents chan events.GameStateBroadcast
+	scores         map[string]int // playername id -> scores
+	scrambledWord  string // current scramble
+	wordCounts     map[string]int
 	join           chan *client
 	leave          chan *client
 	gameEngine     *engine.Game
@@ -56,29 +58,26 @@ func (gr *GameRoom) Run() {
 
 	for {
 		select {
-		case c := <-gr.join:
+		case c := <- gr.join:
 			gr.Clients[c] = true
 			c.room = gr
 			if gr.status == "" {
 				gr.status = events.Waiting
 			}
 			log.Printf("Client: %s joined Game-Room: %s", c.name, gr.Room.Name)
-			event := events.GameStateBroadcast{
+			gr.broadCastGameStateToClientNB(c, events.GameStateBroadcast{
 				Which:   events.ToJoinedClient,
-				Data:    gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft),
-				Message: "You're in arena! Awaiting game start...",
-			}
-			// non blocking broadcast to client
-			gr.broadCastGameStateToClientNB(c, event)
+				Data:  gr.currentGameState(),
+				Message: "Current game state in arena!",
+			})
 
 			for client := range gr.Clients {
 				if client.UserId != c.UserId {
-					event := events.GameStateBroadcast{
+					gr.broadCastGameStateToClientNB(client, events.GameStateBroadcast{
 						Which:   events.NewClientJoined,
 						Data:    map[string]string{"name": c.name},
 						Message: "New client joined room",
-					}
-					gr.broadCastGameStateToClientNB(client, event)
+					})
 				}
 			}
 
@@ -302,7 +301,8 @@ func (gr *GameRoom) Run() {
 }
 
 // Broadcasts game state to a connected client non-blockingly.
-// Tries to send the event immediately. If inGameToClientEvent chan is full (or if no receiver is listening on the unbuffered channel),
+// Tries to send the event immediately. If inGameToClientEvent chan is full (or if no receiver is 
+// listening on the unbuffered channel),
 // Go jumps straight to the default block without pausing execution
 func (gr *GameRoom) broadCastGameStateToClientNB(c *client, event events.GameStateBroadcast) {
 	select {
@@ -312,3 +312,16 @@ func (gr *GameRoom) broadCastGameStateToClientNB(c *client, event events.GameSta
 		log.Printf("Dropping game event for client %s", c.name)
 	}
 }
+
+func (gr *GameRoom) currentGameState() events.GameStateData{
+	return events.GameStateData{
+		RoomId:        gr.Room.Id,
+		Round:         gr.round,
+		Status:        gr.status,
+		TimeLeft:      gr.timeLeft,
+		ScrambledWord: gr.scrambledWord,
+		Scores:        gr.scores,
+		WordCounts:    gr.wordCounts,
+	}
+}
+

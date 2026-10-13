@@ -22,7 +22,7 @@ func NewGame(roomId string) *Game {
 		ID: crypto.BLAKE2b_256.Size(),
 		ActiveRoom: ActiveRoom{
 			ID:         roomId,
-			Scores:     make(map[string]int),
+			Scores:     make(map[string]int), // name -> scores of all players
 			UsedWords:  make(map[string]string),
 			WordCounts: make(map[string]int),
 			Done:       make(chan struct{}),
@@ -191,6 +191,8 @@ func (g *Game) GenerateStatsReport() events.GameStateBroadcast {
 	}
 }
 
+// TODO: Game engine must only be responsible for game: word generation, scoring word.
+// Fetches current game state data for a given room and return the results as event.GameStateData. 
 func (g *Game) CurrentGameData(roomID string, round int, status events.Status, timeLeft int) events.GameStateData {
 	g.mux.Lock()
 	defer g.mux.Unlock()

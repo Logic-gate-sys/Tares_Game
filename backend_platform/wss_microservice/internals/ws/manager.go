@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"sync"
 	"time"
-
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/logic-gate-sys/wss_service/internals/engine"
@@ -252,13 +251,13 @@ func (rm *roomManager) joinRoom(c *client, room store.RoomViewModel) (error, *Ga
 	}
 	
 	c.room = playerRoom
-	// rm.broadCastLobbyEventToClientNB(c, events.LobbyStateBroadcast{
-	// 	Which: events.JoinResponse,
-	// 	Data: map[string]any{
-	// 		"accepted": true,
-	// 		"room":     room,
-	// 		"message":  fmt.Sprintf("Success!, welcome to game room: %s", room.Name)},
-	// })
+	rm.broadCastLobbyEventToClientNB(c, events.LobbyStateBroadcast{
+		Which: events.JoinResponse,
+		Data: map[string]any{
+			"accepted": true,
+			"room":     room,
+			"message":  fmt.Sprintf("Success!, welcome to game room: %s", room.Name)},
+	})
 	return nil, playerRoom
 }
 
