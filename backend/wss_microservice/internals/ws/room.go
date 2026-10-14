@@ -5,7 +5,7 @@ import (
 	"log"
 	"strconv"
 	"time"
-	"github.com/logic-gate-sys/wss_service/internals/engine"
+	"github.com/logic-gate-sys/wss_service/internals/word_engine"
 	"github.com/logic-gate-sys/wss_service/internals/events"
 	"github.com/logic-gate-sys/wss_service/internals/store"
 	"github.com/logic-gate-sys/wss_service/internals/timer"
@@ -67,10 +67,10 @@ func (gr *GameRoom) Run() {
 			log.Printf("Client: %s joined Game-Room: %s", c.name, gr.Room.Name)
 			gr.broadCastGameStateToClientNB(c, events.GameStateBroadcast{
 				Which:   events.ToJoinedClient,
-				Data:  gr.currentGameState(),
+				Data:   gr.currentGameState(),
 				Message: "Current game state in arena!",
 			})
-
+      // broadcast this client's join to other clients
 			for client := range gr.Clients {
 				if client.UserId != c.UserId {
 					gr.broadCastGameStateToClientNB(client, events.GameStateBroadcast{

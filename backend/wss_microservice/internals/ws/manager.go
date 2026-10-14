@@ -12,7 +12,7 @@ import (
 	"time"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/logic-gate-sys/wss_service/internals/engine"
+	"github.com/logic-gate-sys/wss_service/internals/word_engine"
 	"github.com/logic-gate-sys/wss_service/internals/events"
 	"github.com/logic-gate-sys/wss_service/internals/grpc"
 	"github.com/logic-gate-sys/wss_service/internals/middleware"
