@@ -3,11 +3,9 @@ package engine
 import (
 	"bufio"
 	"fmt"
-	"os"
-	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
+	"github.com/logic-gate-sys/wss_service/internals/dictionary"
 )
 
 // This spawns 5 goroutines each scanning job channels
@@ -16,21 +14,25 @@ import (
 // 3. Found channel signals an early return if word is found by any go routine scanning job channel
 // 4  quit channel signals a final withrawal by the last job scanner
 
-func ValidateWord(word string, fileName string) (bool, error) {
-	// open file
-	file, err := os.Open(fileName)
-	if os.IsNotExist(err) {
-		_, sourceFile, _, _ := runtime.Caller(0)
-		file, err = os.Open(filepath.Join(filepath.Dir(sourceFile), "..", "dictionary", filepath.Base(fileName)))
+type Validator struct{}
+type ValidatorInterface interface{
+	ValidateWord(word string, fileName string) (bool, error)
+}
+
+
+func NewValidator() Validator{
+	return Validator{}
+}
+
+func (vdd * Validator) ValidateWord(word string, fileName string) (bool, error) {
+	file, fileErr := dictionary.Words.Open(fileName)
+	if fileErr != nil {
+	   return false, fmt.Errorf("Failed to open text file. Error: %v", fileErr.Error())
 	}
-	if err != nil {
-		return false, fmt.Errorf("Failed to open text file. Error: %v", err)
-	}
-	// close file eventually
 	defer file.Close()
 
 	// channels for cordiantion
-	jobs := make(chan string, 100) // streams text to all workers
+	scannedWords := make(chan string, 100) // streams text to all workers
 	found := make(chan bool, 1)    // signifies word found or not
 	quit := make(chan struct{})    // give and early quit to all workers
 
@@ -38,18 +40,16 @@ func ValidateWord(word string, fileName string) (bool, error) {
 	var wg sync.WaitGroup
 	//spawn five workers
 	numWorkers := 5
+	//TODO: Optimised routines to read from demacated locations in words channel, to make concurrency even faster
 	for i := 0; i < numWorkers; i++ {
-		// wait group for current worker
 		wg.Add(1)
-		// a go routine for current worker
 		go func() {
-			// Eventually remove this work from waitgroup: Add(-1)
 			defer wg.Done()
-			for current_word := range jobs {
-				// has another worker signaled a shutdown
+			for current_word := range scannedWords {
 				select {
 				case <-quit:
 					return
+					
 				default:
 				}
 				// validate word
@@ -57,6 +57,7 @@ func ValidateWord(word string, fileName string) (bool, error) {
 					select {
 					case found <- true:
 						close(quit)
+						
 					default:
 					}
 					return
@@ -72,25 +73,24 @@ func ValidateWord(word string, fileName string) (bool, error) {
 			select {
 			case <-quit:
 				break
-			case jobs <- scanner.Text():
+				
+			case scannedWords <- scanner.Text():
 			}
 		}
-		close(jobs) // peacefully close job channel
-
+		close(scannedWords) // peacefully close job channel
 	}()
 
 	// wait for all workers in seperate go routines to finish
 	waitDone := make(chan struct{})
 	go func() {
-		// wait for all routines
 		wg.Wait()
 		close(waitDone)
 	}()
-	//Final check
+	
 	select {
 	case <-found:
 		return true, nil
-	// case <-waitDone:
+
 	case <-waitDone:
 		return false, nil
 	}

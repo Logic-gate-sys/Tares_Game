@@ -1,76 +1,55 @@
 package engine
 
 import (
+	"bufio"
 	"fmt"
 	"math/rand/v2"
-	"slices"
+	"strings"
+	"github.com/logic-gate-sys/wss_service/internals/dictionary"
 )
 
-type GameLetters struct {
-	Round   int   `json:"round"`
-	Letters []int `json:"_"`
+type GameLetters struct{}
+
+type GameLettersInterface interface{
+	 GroupLetters() ([]string, error)
 }
 
-/*
-This package is responsible for these:
- 1. Generating a random latter from a to z
- 2 Forming a reseanable length string of letters in a slice
- 3.
-*/
-
-type LettersInterface interface {
-	GroupLetters() ([]string, error)
+func NewGameLetters() GameLetters{
+	return GameLetters{}
 }
-
-// This groups letters generated. It first regenerate until all conditions for scramble letters.
-// Returns the []string of letters
+// Reads dictionary , pick random words and turn it it a scramble letter. 
 func (l *GameLetters) GroupLetters() ([]string, error) {
-	var generated []string
-
-	// try until we have valid letters
-	seed := rand.N(42) + 3
-	generated = []string{}
-
-	for {
-		// loop to generate letters
-		for i := 0; i <= seed; i++ {
-			lett := l.GenerateLetter()
-			// append generated letters
-			generated = append(generated, lett)
-		}
-		//validate that generated works contain atleast one vowel
-		isValid := l.lettersAreValid(generated)
-		if !isValid {
-			fmt.Println("Generated Letters don't meet the requirements, trying again")
-			continue
-		}
-		// if letters are vaild break
-		break
+ words, err := dictionaryWords()
+	if err != nil || len(words)==0 {
+		return nil, err
 	}
+	
+	word := words[rand.IntN(len(words))]
+	letters := strings.Split(strings.ToUpper(word), "")
+	rand.Shuffle(len(letters), func(i, j int) {
+		letters[i], letters[j] = letters[j], letters[i]
+	})
 
-	return generated, nil
+	return letters, nil
 }
 
-// This checks if all requirements are fulfiled for the generate letters
-func (l *GameLetters) lettersAreValid(gn []string) bool {
-	vowel_count := 0
-	// vowels
-	vowels := []string{"A", "E", "I", "0", "U"}
-	for i := 0; i < len(gn); i++ {
-		if slices.Contains(vowels, gn[i]) {
-			vowel_count++
+
+func dictionaryWords() ([]string, error) {
+	content, err := dictionary.Words.ReadFile("words.txt")
+	if err != nil {
+		return nil, fmt.Errorf("failed to load embedded dictionary: %w", err)
+	}
+
+	words := make([]string, 0)
+	scanner := bufio.NewScanner(strings.NewReader(string(content)))
+	for scanner.Scan() {
+		word := strings.ToLower(strings.TrimSpace(scanner.Text()))
+		if len(word) >= 3 && len(word) <= 12 {
+			words = append(words, word)
 		}
 	}
-	// return final values
-	return vowel_count > 1
-}
-
-// Generates a random slice of letters spaming from 3 - 30
-func (l *GameLetters) GenerateLetter() string {
-	letters := [26]string{
-		"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
-		"N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+	if err := scanner.Err(); err != nil {
+		return nil, err
 	}
-	letter := letters[rand.IntN(len(letters))]
-	return letter
+	return words, nil
 }
