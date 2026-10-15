@@ -1,8 +1,27 @@
 package engine
 
+
 import (
 	"strings"
 )
+
+type Difficulty int
+
+const (
+	Easy Difficulty = iota // 5 letters, more vowels
+	Medium
+	Hard
+	Extreme
+)
+
+type MaxScore int
+
+const (
+	Amateur      MaxScore = 1
+	Intermediate MaxScore = 2
+	Expert       MaxScore = 3
+)
+
 
 type wordEngine struct{
 	letterSet    GameLetters

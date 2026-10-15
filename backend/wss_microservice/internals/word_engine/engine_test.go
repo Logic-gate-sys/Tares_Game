@@ -35,9 +35,10 @@ func TestWordScoring(t *testing.T) {
 		{name: "Edge Case - Empty string input", word: "", difficulty: Medium, expected_score: 0},
 		{name: "Edge Case - Single letter input", word: "a", difficulty: Easy, expected_score: 0},
 	}
+	wordEngine := NewWordEngine()
 	for _, tt_c := range test_cases {
 		t.Run(tt_c.name, func(t *testing.T) {
-			score, err := ScoreWord(tt_c.word, tt_c.difficulty)
+			score, err := wordEngine.ScoreWord(tt_c.word, tt_c.difficulty)
 			if err != nil && score == 0 {
 				t.Fatalf("ScoreWord returned unexpected error for '%s': %v", tt_c.word, err.Error())
 				return
