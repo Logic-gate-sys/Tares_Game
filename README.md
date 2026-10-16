@@ -9,52 +9,50 @@ Tares delivers the multiplayer capability of word scrable with intuitive UI that
 ## Technical Diagrams 
 The App combines two current microservices, handling user stats, websocket connections and room managements as well as live updates broadcasting. This feature combine with intuitive UI elements help you focus on the game while the engine does the heavy light. 
 
-Look under the hood: 
 ```mermaid
 flowchart TD
-	CLIENT[[Web Browser]] <--> |Communicates| NGINX[Reverse Proxy]
-  NGINX <--> Backend 
-  
-	subgraph Backend
-	   direction LR
-	  subgraph  Game_Microservice
-		  direction LR 
-      User_APIs[(REST API microservice)]
-      DB1[(User databased)]
-      DB1 --> User_APIs
-		end
+    CLIENT["Web Browser"]:::client
+    NGINX["Reverse Proxy"]:::gateway
 
-		subgraph  Game_Microservice  
-		  direction LR
-      Game_Engine[(Game engine + Websocket)]
-      DB2[(User databased)]
-      DB2 --> Game_Engine
-		end
+    CLIENT <--> NGINX
 
-		subgraph  Merch_Microservice  
-		  direction LR
-      Merch[(Coming Soon)]
-      DB3[(User databased)]
-      DB3 --> Merch
-		end
-		
-	end
-	
-  NGINX <-->|HTTP| User_APIs
-  NGINX <-->|WebSocket| Game_Engine
-  Game_Microservice <--> |gRPC| User_Microservice
-  User_Microservice <--> |gRPC| Merch_Microservice
+    subgraph Backend
+        direction LR
 
-  classDef client fill:#eaf7ea,stroke:#3a7d44,stroke-width:1.5px
-  classDef gateway fill:#f3e8fd,stroke:#7b4fa0,stroke-width:1.5px
-  classDef service fill:#e8f0fe,stroke:#4a6fa5,stroke-width:1.5px
-  classDef database fill:#fef6e4,stroke:#b08500,stroke-width:1.5px
+        subgraph User_Microservice
+            direction LR
+            User_APIs["REST API microservice"]:::service
+            DB1[("User database")]:::database
+            User_APIs <--> DB1
+        end
 
-  class CLIENT client 
-  class NGINX gateway
-  class User_APIs, Game_Engine service
-  class DB1,DB2 database
+        subgraph Game_Microservice
+            direction LR
+            Game_Engine["Game engine + WebSocket"]:::service
+            DB2[("Game database")]:::database
+            Game_Engine <--> DB2
+        end
+
+        subgraph Merch_Microservice
+            direction LR
+            Merch["Merch service (coming soon)"]:::pending
+            DB3[("Merch database")]:::database
+            Merch <--> DB3
+        end
+    end
+
+    NGINX <-->|HTTP| User_APIs
+    NGINX <-->|WebSocket| Game_Engine
+    Game_Microservice <-->|gRPC| User_Microservice
+    User_Microservice <-->|gRPC| Merch_Microservice
+
+    classDef client fill:#eaf7ea,stroke:#3a7d44,stroke-width:1.5px
+    classDef gateway fill:#f3e8fd,stroke:#7b4fa0,stroke-width:1.5px
+    classDef service fill:#e8f0fe,stroke:#4a6fa5,stroke-width:1.5px
+    classDef database fill:#fef6e4,stroke:#b08500,stroke-width:1.5px
+    classDef pending fill:#f5f5f5,stroke:#888888,stroke-width:1.5px,stroke-dasharray:5 5
 ```
+
 ### The sequence of user Experience: 
 - User create account/login via the web client
 - User lands in a game lobby where they can create their own rooms online and make them available to others
