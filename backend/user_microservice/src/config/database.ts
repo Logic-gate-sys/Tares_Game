@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { env } from '../environment.ts';
+import { env } from '../env.ts';
 import { drizzle} from 'drizzle-orm/node-postgres'
 
 export const pool = new Pool({

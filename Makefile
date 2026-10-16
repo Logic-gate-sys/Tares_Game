@@ -29,6 +29,8 @@ wss_go_tidy:
 
 down:
 	docker compose --profile dev --profile prod down
+up:
+	docker compose --profile dev up 
 
 logs:
 	docker compose --profile dev --profile prod logs -f

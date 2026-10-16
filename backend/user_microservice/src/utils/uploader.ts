@@ -1,5 +1,5 @@
 import { v2 as cloudinary, type UploadApiOptions } from 'cloudinary';
-import { env } from '../environment.ts';
+import { env } from '../env.ts';
 
 cloudinary.config({
   secure: true,

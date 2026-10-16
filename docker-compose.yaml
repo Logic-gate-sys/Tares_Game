@@ -18,6 +18,21 @@ services:
       retries: 10
     profiles: ["dev", "prod"]
 
+  test-userdb:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${USER_TESTDB_USER:-test_user}
+      POSTGRES_PASSWORD: ${USER_TESTDB_PASSWORD:-test_user}
+      POSTGRES_DB: ${USER_TESTDB_NAME:-test_userDB}
+    ports:
+      - "${USER_TESTDB_PORT:-5434}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    profiles: ["dev", "prod"]
+
   game-db:
     image: postgres:17-alpine
     environment:
@@ -46,7 +61,7 @@ services:
   user-service:
     build:
       context: .
-      dockerfile: backend_platform/user_microservice/Dockerfile
+      dockerfile: backend/user_microservice/Dockerfile
     environment:
       NODE_ENV: development
       SERVER_PORT: 3000
@@ -62,7 +77,7 @@ services:
 
   wss-service:
     build:
-      context: ./backend_platform/wss_microservice
+      context: backend/wss_microservice
       dockerfile: Dockerfile
     environment:
       WSS_PORT: 8081

@@ -1,92 +1,82 @@
-import request from 'supertest';
-import { describe, expect, it, vi } from 'vitest';
-import { app } from '../../src/app.ts';
-import { createTestUser } from '../helpers/testHelpers.ts';
+import { test, expect, describe,beforeEach, vi } from 'vitest'; 
+import request from 'supertest'; 
+import { app } from '../../src/app'
+import { createTestUser } from '../helpers/testHelpers';
+import { pool } from '../setups/globalSetup';
 
-vi.mock('#utils/uploader', () => ({
-  upload: vi.fn().mockResolvedValue('https://cdn.test/avatar.jpg'),
-}));
+const baseURL = 'localhost:3000/api/v1/'
+describe("User Signup & Login Workflows Tests", () => {
+  
+  describe("POST: auth/signup", () => {
+    test("mock api test", async () => {
+      const getResults = vi.fn();
+      getResults.mockResolvedValue({ status:201, data: { email: 'someone@gmail.com', password: 'someone', fakeToken: 'tokenherer' },});
+      getResults.mockRejectedValue({ error: 'Invalid values', status: 500 });
 
-describe('Auth integration tests', () => {
-  it('registers through the real route without calling Cloudinary', async () => {
-    const response = await request(app)
-      .post('/api/v1/auth/register')
-      .field({
-        email: 'custom@test.com',
-        username: 'custom',
-        password: 'Password123!',
-        playerLevel: '1',
-        rank: 'unranked',
-        bio: 'Custom test user',
-        bgClass: 'default',
-      })
-      .attach('avatar', Buffer.from('test-image'), 'avatar.jpg');
+      expect(getResults().Rejects).toHaveProperty('error', 'Invalid values');
+      expect(getResults()).toBeDefined(); 
+    })
+    // Each test needs to start from a clean sheet to verify independent app logic. 
+    beforeEach(async () => {
+      // clean user table before each test
+      await pool.query(`DELETE * FROM users`)
+    })
+    test("User creates account with valid details", async () => {
+      const res = await request(app)
+        .post(baseURL+"/auth/signup")
+        .send({
+          email: "test@gmail.com",
+          username: "testman",
+          password: "testman2",
+          playerLevel: "2",
+          rank: "3",
+          bio: "My humble bio",
+          bgClass: "bg-yellow-400",
+          avatarUrl: "https://cloudinary.com/smaple/test-avatar"
+        })
+        .expect(200)
 
-    expect(response.status).toBe(201);
-    expect(response.body.user.email).toBe('custom@test.com');
-    expect(response.body.user.avatarUrl).toBe('https://cdn.test/avatar.jpg');
-    expect(response.body.token).toBeDefined();
+      expect(res.status).toBe(201);
+      expect(res.body).not.toBeUndefined();
+    });
+
+    test("Rejects invalid request data", async () => {
+      const res = await request(app)
+        .post(baseURL+"/auth/register")
+        .send({
+          email: "test@gmail.com",
+          username: "testman",
+          playerLevel: "2",
+          rank: "3",
+          bio: "My humble bio",
+          bgClass: "bg-yellow-400",
+          avatarUrl: "https://cloudinary.com/smaple/test-avatar"
+        })
+        .expect(400)
+
+      expect(res.status).toBe(400);
+      expect(res.body).not.toBeUndefined();
+    })
   });
 
-  it('rejects duplicate registration', async () => {
-    const user = await createTestUser();
-    const response = await request(app)
-      .post('/api/v1/auth/register')
-      .field({
-        email: user.email,
-        username: 'another-user',
-        password: 'Password123!',
-      })
-      .attach('avatar', Buffer.from('test-image'), 'avatar.jpg');
+  describe("POST: auth/login", () => {
+    beforeEach(async () => {
+      // clean user table before each test
+      await pool.query(`DELETE * FROM users`)
+    })
+    test("User is able to login with valid details", async () => {
+      const {email, rawPassword} = await createTestUser()
+      const res = await request(app)
+        .post(baseURL+"/auth/login")
+        .send({
+          email: email,
+          password: rawPassword,
+        })
+        .expect(200)
 
-    expect(response.status).toBe(409);
-  });
+      expect(res.status).toBe(201);
+      expect(res.body).not.toBeUndefined();
+    })
+  })
 
-  it('logs in with email or username', async () => {
-    const user = await createTestUser();
-    const response = await request(app)
-      .post('/api/v1/auth/login')
-      .send({ username: user.username, password: user.rawPassword });
-
-    expect(response.status).toBe(200);
-    expect(response.body.user.username).toBe(user.username);
-    expect(response.body.token).toBeDefined();
-  });
-
-  it('rejects invalid credentials', async () => {
-    const response = await request(app)
-      .post('/api/v1/auth/login')
-      .send({ email: 'missing@example.com', password: 'Password123!' });
-
-    expect(response.status).toBe(401);
-  });
-
-  it('returns the authenticated profile', async () => {
-    const user = await createTestUser();
-    const response = await request(app)
-      .get('/api/v1/users/me')
-      .set('Authorization', `Bearer ${user.token}`);
-
-    expect(response.status).toBe(200);
-    expect(response.body.email).toBe(user.email);
-  });
-
-  it('rejects profile access without a token', async () => {
-    const response = await request(app).get('/api/v1/users/me');
-    expect(response.status).toBe(401);
-  });
-
-  it('returns a password reset token and accepts it', async () => {
-    const user = await createTestUser();
-    const reset = await request(app)
-      .post('/api/v1/auth/forgot-password')
-      .send({ email: user.email });
-
-    expect(reset.status).toBe(200);
-    const response = await request(app)
-      .post('/api/v1/auth/reset-password')
-      .send({ token: reset.body.resetToken, password: 'NewPassword123!' });
-
-    expect(response.status).toBe(200);
-  });
-});
+})

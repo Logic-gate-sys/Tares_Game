@@ -4,7 +4,7 @@ import { docsMiddleware } from '#routes/docs';
 import { errorHandler } from '#middlewares/error-handler';
 import userRoutes from '#routes/users';
 import cors from 'cors';
-import { env } from './environment.ts';
+import { env } from './env.ts';
 
 
 
