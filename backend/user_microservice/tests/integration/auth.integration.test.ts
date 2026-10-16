@@ -4,10 +4,10 @@ import { app } from '../../src/app'
 import { createTestUser } from '../helpers/testHelpers';
 import { pool } from '../setups/globalSetup';
 
-
-describe("AUTH: /api/auth", () => {
+const baseURL = 'localhost:3000/api/v1/'
+describe("User Signup & Login Workflows Tests", () => {
   
-  describe("POST: /api/auth", () => {
+  describe("POST: auth/signup", () => {
     test("mock api test", async () => {
       const getResults = vi.fn();
       getResults.mockResolvedValue({ status:201, data: { email: 'someone@gmail.com', password: 'someone', fakeToken: 'tokenherer' },});
@@ -23,7 +23,7 @@ describe("AUTH: /api/auth", () => {
     })
     test("User creates account with valid details", async () => {
       const res = await request(app)
-        .post("/api/users/register")
+        .post(baseURL+"/auth/signup")
         .send({
           email: "test@gmail.com",
           username: "testman",
@@ -42,7 +42,7 @@ describe("AUTH: /api/auth", () => {
 
     test("Rejects invalid request data", async () => {
       const res = await request(app)
-        .post("/api/users/register")
+        .post(baseURL+"/auth/register")
         .send({
           email: "test@gmail.com",
           username: "testman",
@@ -59,7 +59,7 @@ describe("AUTH: /api/auth", () => {
     })
   });
 
-  describe("POST: /api/users/login", () => {
+  describe("POST: auth/login", () => {
     beforeEach(async () => {
       // clean user table before each test
       await pool.query(`DELETE * FROM users`)
@@ -67,7 +67,7 @@ describe("AUTH: /api/auth", () => {
     test("User is able to login with valid details", async () => {
       const {email, rawPassword} = await createTestUser()
       const res = await request(app)
-        .post("/api/users/register")
+        .post(baseURL+"/auth/login")
         .send({
           email: email,
           password: rawPassword,
