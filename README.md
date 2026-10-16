@@ -1,34 +1,80 @@
-# Tares CLI 
+# TARES GAME 
 
-Version: 1.0.0 
+### What Is It All About?
+It's all about the fun of wordscrable game, but this time delivered over websocket with real-time capabilities so you can challenge your friends or even complete strangers to a 'fight'. 
+Tares delivers the multiplayer capability of word scrable with intuitive UI that aims to help you relax while you have fun playing wordscrable with your friends
 
-Tares CLI is a terminal-based multiplayer word scramble game written in Go.
-Players authenticate from the terminal, connect over WebSocket, and receive live game updates in the same window.
-Version: 1.0.1 will move all such interactions to the web with beatiful UIs and animations building on the proof of concept
+- Tares help you polish your spelling and critical thinking & problem solving abilities while you enjoy and beat/be beaten to a fight.
 
-## What Lives In The Repo
+## Technical Diagrams 
+The App combines two current microservices, handling user stats, websocket connections and room managements as well as live updates broadcasting. This feature combine with intuitive UI elements help you focus on the game while the engine does the heavy light. 
 
+Look under the hood: 
 ```mermaid
-flowchart LR
-	subgraph Client
-		CLI[TUI]
-	end
+flowchart TD
+	CLIENT[[Web Browser]] <--> |Communicates| NGINX[Reverse Proxy]
+  NGINX <--> Backend 
+  
+	subgraph Backend
+	   direction LR
+	  subgraph  Game_Microservice
+		  direction LR 
+      User_APIs[(REST API microservice)]
+      DB1[(User databased)]
+      DB1 --> User_APIs
+		end
 
-	subgraph Server
-		HTTP[HTTP API\n/signup /login]
-		WS[WebSocket room endpoint\n/ws/rooms]
-		RM[Room manager\nmatch lobby clients]
-		ROOM[Game room\nscore + timer + broadcasts]
-		DB[(PostgreSQL)]
-	end
+		subgraph  Game_Microservice  
+		  direction LR
+      Game_Engine[(Game engine + Websocket)]
+      DB2[(User databased)]
+      DB2 --> Game_Engine
+		end
 
-	CLI --> HTTP
-	CLI --> WS
-	WS --> RM
-	RM --> ROOM
-	ROOM --> DB
-	HTTP --> DB
+		subgraph  Merch_Microservice  
+		  direction LR
+      Merch[(Coming Soon)]
+      DB3[(User databased)]
+      DB3 --> Merch
+		end
+		
+	end
+	
+  NGINX <-->|HTTP| User_APIs
+  NGINX <-->|WebSocket| Game_Engine
+  Game_Microservice <--> |gRPC| User_Microservice
+  User_Microservice <--> |gRPC| Merch_Microservice
+
+  classDef client fill:#eaf7ea,stroke:#3a7d44,stroke-width:1.5px
+  classDef gateway fill:#f3e8fd,stroke:#7b4fa0,stroke-width:1.5px
+  classDef service fill:#e8f0fe,stroke:#4a6fa5,stroke-width:1.5px
+  classDef database fill:#fef6e4,stroke:#b08500,stroke-width:1.5px
+
+  class CLIENT client 
+  class NGINX gateway
+  class User_APIs, Game_Engine service
+  class DB1,DB2 database
 ```
+
+## Demo 
+
+
+## User install and Testing Guide 
+
+
+
+## Contributing 
+
+
+
+## Known Issues 
+
+
+## Buy Me a Coffee
+
+
+
+
 
 ## How It Works
 
