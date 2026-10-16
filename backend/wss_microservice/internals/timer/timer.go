@@ -22,23 +22,20 @@ func NewGameClock() *GameClock {
 
 func (gc *GameClock) Start() {
 	gc.ticker = time.NewTicker(1 * time.Second)
-	// spawn a go routine for start
+	
 	go func() {
 		for {
 			select {
 			case t := <-gc.ticker.C:
-				// check for is pause but lock read mutex
 				gc.mu.RLock()
 				isPaused := gc.isPause
 				gc.mu.RUnlock()
 
-				// if it's not paused
 				if !isPaused {
 					select {
 					case gc.tickChan <- t:
-						// sent the tick to channel
+						
 					default:
-						// do nothing so that you don't block room run
 					}
 				}
 				// if something comes down the stop channel

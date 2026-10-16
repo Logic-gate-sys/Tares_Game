@@ -3,12 +3,12 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-chi/chi"
 	"net/http"
 	"strconv"
-	"github.com/go-chi/chi"
 )
 
-type Envlope map[string]interface{}
+type Envlope map[string]any
 
 // Writes formatted json sent to the client with status code and associated data
 func WriteJSON(w http.ResponseWriter, status int, data any) error {

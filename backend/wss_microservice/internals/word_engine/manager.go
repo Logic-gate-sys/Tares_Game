@@ -15,7 +15,6 @@ const (
 )
 
 type MaxScore int
-
 const (
 	Amateur      MaxScore = 1
 	Intermediate MaxScore = 2
@@ -23,25 +22,24 @@ const (
 )
 
 
-type wordEngine struct{
-	letterSet    GameLetters
+type WordEngine struct{
+	letterSet      *GameLetters
 	validator       Validator
 }
 
 type GameEngineInterface interface {
 	UserScoreWord(word string, diff Difficulty) (float32, error)
-	ManageTimer()
 }
 
-func NewWordEngine() *wordEngine{
-	return &wordEngine{
+func NewWordEngine() *WordEngine{
+	return &WordEngine{
 		validator: NewValidator(),
 		letterSet: NewGameLetters(),
 	}
 }
 
 // Validates words user submit and awards scores based on validity and difficulty level of word. 
-func (we *wordEngine) ScoreWord(word string, diff Difficulty) (float32, error) {
+func (we *WordEngine) ScoreWord(word string, diff Difficulty) (float32, error) {
 	word = strings.ToLower(strings.TrimSpace(word))
 	if word == "" {
 		return 0, nil
@@ -54,14 +52,27 @@ func (we *wordEngine) ScoreWord(word string, diff Difficulty) (float32, error) {
 	switch diff {
 		case Easy:
 			return float32(Amateur), nil
+			
 		case Medium:
 			return float32(Intermediate), nil
+			
 		case Hard:
 			return float32(Expert), nil
+			
 		case Extreme:
 			return float32(2 * Expert), nil
+			
 		default:
 			return 0, nil
 	}
 }
 
+
+func (we *WordEngine)  GenerateScramble() ([]string, error) {
+	letters, err := we.letterSet.GroupLetters()
+	if err !=nil{
+		return []string{}, err
+	}
+
+	return letters, nil 
+}

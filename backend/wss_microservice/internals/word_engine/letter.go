@@ -14,10 +14,11 @@ type GameLettersInterface interface{
 	 GroupLetters() ([]string, error)
 }
 
-func NewGameLetters() GameLetters{
-	return GameLetters{}
+func NewGameLetters() *GameLetters{
+	return &GameLetters{}
 }
-// Reads dictionary , pick random words and turn it it a scramble letter. 
+
+// Reads dictionary (using dictionaryWords func) , pick random words and turn it into a scramble letter. 
 func (l *GameLetters) GroupLetters() ([]string, error) {
  words, err := dictionaryWords()
 	if err != nil || len(words)==0 {
@@ -34,6 +35,7 @@ func (l *GameLetters) GroupLetters() ([]string, error) {
 }
 
 
+// Read embedded dictionary words and format int string arrays 
 func dictionaryWords() ([]string, error) {
 	content, err := dictionary.Words.ReadFile("words.txt")
 	if err != nil {

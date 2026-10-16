@@ -10,10 +10,11 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/logic-gate-sys/wss_service/internals/word_engine"
 	"github.com/logic-gate-sys/wss_service/internals/events"
+	"github.com/logic-gate-sys/wss_service/internals/game_engine"
 	"github.com/logic-gate-sys/wss_service/internals/grpc"
 	"github.com/logic-gate-sys/wss_service/internals/middleware"
 	"github.com/logic-gate-sys/wss_service/internals/store"
@@ -205,7 +206,6 @@ func (rm *roomManager) Run() {
 				// remove requester from lobby and put him on playerRoom join channel.
 				delete(rm.lobbyClients, pending.requester)
 				playerRoom.join <- pending.requester
-				break
 			}
 		}
 	}
@@ -241,7 +241,7 @@ func (rm *roomManager) joinRoom(c *client, room store.RoomViewModel) (error, *Ga
 			outBoundEvents: make(chan events.GameStateBroadcast),
 			join:           make(chan *client),
 			leave:          make(chan *client),
-			gameEngine:     engine.NewGame(room.ID),
+			gameEngine:     game_engine.NewGame(room.ID),
 			startGame:      make(chan bool),
 			stopGame:       make(chan bool),
 			pauseGame:      make(chan bool),
