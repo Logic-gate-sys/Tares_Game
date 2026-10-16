@@ -1,11 +1,10 @@
 import { Pool } from 'pg';
-import { env } from '../../src/environment.ts';
+import { env } from '../../src/env.ts';
 
-let pool: Pool;
+export const pool = new Pool({ connectionString: env.DATABASE_URL });
 
-export async function setup() {
-  const databaseUrl = process.env.TEST_DATABASE_URL ?? env.DATABASE_URL;
-  pool = new Pool({ connectionString: databaseUrl });
+// setup database with some schema to start with 
+export async function setup() {  
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
@@ -19,14 +18,7 @@ export async function setup() {
       avatar_url TEXT NOT NULL,
       total_score INTEGER NOT NULL,
       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      last_login TIMESTAMP NOT NULL DEFAULT NOW()
-    )
-  `);
-  await pool.query(`
-    ALTER TABLE users
-    ADD COLUMN IF NOT EXISTS last_login TIMESTAMP NOT NULL DEFAULT NOW()
-  `);
-  await pool.query('TRUNCATE TABLE users RESTART IDENTITY CASCADE');
+      last_login TIMESTAMP NOT NULL DEFAULT NOW()) `);
 }
 
 export async function teardown() {
