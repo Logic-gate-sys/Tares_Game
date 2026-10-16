@@ -163,35 +163,26 @@ sequenceDiagram
 
 
 ## User install and Testing Guide 
+### Reqirements to run game locally 
+  - Go 1.26.3  or later version 
+  - Docker Desktop installed on your machine 
+  - Nodejs v24+ & Npm locally install and running 
+  - A Web browser ideally Google Chrome 
 
-
-
+  ### Docker workflow
+  - In your terminal optimally bash terminal follow these commands appropriately:
+  ```bash 
+    make dev # This spins up the required docker containers needed to run the up and concurrently spin up the web client
+  ```
+  ```bash 
+    make down # Spins donw all docker resources and webclient concurrently
+  ```
+  
 ## Contributing 
-
-
+  A stable version of this app needs to be released before any contributions will be accepted. If this projects interests you and you think you can make use of it or even add some cool new features always consider to DM or email.
 
 ## Known Issues 
-
-
+  - No Merch features in current version 
+  - App not currently deployed to the cloud - I'm fixing some minor bugs and will be delivering the live version soon 
 ## Buy Me a Coffee
 
-
-## Quick Start
-
-### Requirements
-
-- Go 1.26.3 or compatible
-- PostgreSQL running locally
-- A database named `tares_db`
-
-### Database Connection
-
-The server currently opens PostgreSQL with this connection string:
-
-```text
-host=localhost user=logic dbname=tares_db port=5433 password=logicgate sslmode=disable
-```
-
-Adjust your local database to match that configuration, or update the server code before running.
-
-### Run The Server
