@@ -45,7 +45,8 @@ lint:
 
 test: test-user test-wss
 	cd client && npm test -- --run
-
+lint-user:
+	cd backend/user_microservice && npm run lint
 test-user:
 	cd backend/user_microservice && npm run test
 

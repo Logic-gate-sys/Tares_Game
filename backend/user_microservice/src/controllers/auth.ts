@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { confirmPasswordReset as updatePassword, resetPassword, signIn, signUp, viewUserProfile } from '#repositories/users';
 import { createToken, verifyToken } from '#utils/crypto';
 import { upload } from '#utils/uploader';
-import type { PasswordResetConfirmInput, PasswordResetRequestInput, SignupData, SigninInput } from '#schemas/auth';
+import type { PasswordResetConfirmInput, PasswordResetRequestInput, SignupData } from '#schemas/auth';
 
 
 
@@ -22,12 +22,12 @@ export async function signup(request: Request, response: Response): Promise<void
 
     response.status(201).json({
       user: toAuthUser(user),
-      token: createToken({ sub: String(user.id), email: user.email, username: user.username, pLevel: user.playerLevel, },
+      token: createToken({ sub: String(user.id), email: user.email, username: user.username, pLevel: user.playerLevel },
         60 * 60 * 24)
     });
   } catch (err: unknown) {
     response.status(500).json({
-      error: `Internal server error: ${err?.message}`
+      error: `Internal server error: ${(err as Error).message}`
     })
   }
 
@@ -48,7 +48,7 @@ export async function signin(request: Request, response: Response): Promise<void
     });
   } catch (err) {
     response.status(500).json({
-      error: `Internal server error: ${err?.message}`
+      error: `Internal server error: ${(err as Error).message}`
     })
   };
 
