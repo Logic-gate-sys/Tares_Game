@@ -15,7 +15,8 @@ help:
 		'  make proto-go      Generate go protobuf in wss_microservice stub'\
 		'  make wss_go_tidy   Tidy go mods ' \
 		'  make user_db_generate  Generate SQL schema ' \
-		'  make user_db_migrate   Migrates SQL schema to DB'
+		'  make user_db_migrate   Migrates SQL schema to DB'\
+		'  make up               Spin up Docker Resources without client'
 
 install:
 	cd backend/user_microservice && npm ci --legacy-peer-deps
@@ -30,7 +31,7 @@ wss_go_tidy:
 down:
 	docker compose --profile dev --profile prod down
 up:
-	docker compose --profile dev up 
+	docker compose --profile dev up --build --remove-orphans user-db  test-userdb game-db redis user-service wss-service dev-gateway
 
 logs:
 	docker compose --profile dev --profile prod logs -f

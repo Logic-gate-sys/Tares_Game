@@ -26,10 +26,10 @@ app.use('/api/v1/docs', ...docsMiddleware);
 // Catch-all route for undefined endpoints
 app.use((req, res) => {
   res.status(404).json({
-    success: false,
-    message: `Route ${req.method} ${req.originalUrl} not found`,
+    error: `Route ${req.method} ${req.originalUrl} not found`,
   });
 });
+
 app.use(errorHandler);
 
 export { app };

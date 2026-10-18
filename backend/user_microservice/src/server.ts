@@ -1,5 +1,5 @@
 import { app } from './app.ts';
-import { env } from './environment.ts';
+import { env } from './env.ts';
 import { migrateDatabase } from '#db/migrate';
 import { startGrpcServer } from './grpc/server.ts';
 

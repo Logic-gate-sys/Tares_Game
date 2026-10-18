@@ -1,29 +1,15 @@
-import { test, expect, describe,beforeEach, vi } from 'vitest'; 
+import { test, expect, describe} from 'vitest'; 
 import request from 'supertest'; 
 import { app } from '../../src/app'
 import { createTestUser } from '../helpers/testHelpers';
-import { pool } from '../setups/globalSetup';
 
-const baseURL = 'localhost:3000/api/v1/'
+
 describe("User Signup & Login Workflows Tests", () => {
   
   describe("POST: auth/signup", () => {
-    test("mock api test", async () => {
-      const getResults = vi.fn();
-      getResults.mockResolvedValue({ status:201, data: { email: 'someone@gmail.com', password: 'someone', fakeToken: 'tokenherer' },});
-      getResults.mockRejectedValue({ error: 'Invalid values', status: 500 });
-
-      expect(getResults().Rejects).toHaveProperty('error', 'Invalid values');
-      expect(getResults()).toBeDefined(); 
-    })
-    // Each test needs to start from a clean sheet to verify independent app logic. 
-    beforeEach(async () => {
-      // clean user table before each test
-      await pool.query(`DELETE * FROM users`)
-    })
     test("User creates account with valid details", async () => {
       const res = await request(app)
-        .post(baseURL+"/auth/signup")
+        .post("/api/v1/auth/signup")
         .send({
           email: "test@gmail.com",
           username: "testman",
@@ -42,7 +28,7 @@ describe("User Signup & Login Workflows Tests", () => {
 
     test("Rejects invalid request data", async () => {
       const res = await request(app)
-        .post(baseURL+"/auth/register")
+        .post("/api/v1/auth/register")
         .send({
           email: "test@gmail.com",
           username: "testman",
@@ -60,14 +46,10 @@ describe("User Signup & Login Workflows Tests", () => {
   });
 
   describe("POST: auth/login", () => {
-    beforeEach(async () => {
-      // clean user table before each test
-      await pool.query(`DELETE * FROM users`)
-    })
     test("User is able to login with valid details", async () => {
       const {email, rawPassword} = await createTestUser()
       const res = await request(app)
-        .post(baseURL+"/auth/login")
+        .post("/api/v1/auth/login")
         .send({
           email: email,
           password: rawPassword,
