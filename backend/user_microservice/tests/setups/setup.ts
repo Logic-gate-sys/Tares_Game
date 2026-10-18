@@ -1,6 +1,7 @@
-import { beforeEach } from 'vitest';
+import {  afterEach } from 'vitest';
 import { pool } from '../../src/config/database.ts';
 
-beforeEach(async () => {
-  await pool.query('TRUNCATE TABLE users RESTART IDENTITY CASCADE');
-});
+
+afterEach(async () => {
+  await pool.query('DELETE FROM users'); 
+})
