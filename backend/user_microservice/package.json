@@ -18,7 +18,7 @@
   "main": "src/server.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "NODE_ENV=test vitest --coverage",
+    "test": "NODE_ENV=test vitest watch --coverage ",
     "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config=drizzle.config.ts",
     "db:studio": "drizzle-kit studio --config=drizzle.config.ts",

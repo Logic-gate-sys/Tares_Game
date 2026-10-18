@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import {confirmPasswordReset as updatePassword, resetPassword, signIn,signUp,viewUserProfile} from '#repositories/users';
+import { confirmPasswordReset as updatePassword, resetPassword, signIn, signUp, viewUserProfile } from '#repositories/users';
 import { createToken, verifyToken } from '#utils/crypto';
 import { upload } from '#utils/uploader';
 import type { PasswordResetConfirmInput, PasswordResetRequestInput, SignupData, SigninInput } from '#schemas/auth';
@@ -7,35 +7,51 @@ import type { PasswordResetConfirmInput, PasswordResetRequestInput, SignupData, 
 
 
 export async function signup(request: Request, response: Response): Promise<void> {
-  if (!request.file) {
-    response.status(400).json({ error: 'Avatar image is required' });
-    return;
-  }
-  const avatarUrl = await upload(request.file);
-  const user = await signUp({ ...(request.body as SignupData), avatarUrl });
+  try {
+    if (!request.file) {
+      response.status(400).json({ error: 'Avatar image is required' });
+      return;
+    }
+    const avatarUrl = await upload(request.file);
+    const user = await signUp({ ...(request.body as SignupData), avatarUrl });
 
-  if (!user) {
-    response.status(409).json({ error: 'Email or username is already registered' });
-    return;
+    if (!user) {
+      response.status(409).json({ error: 'Email or username is already registered' });
+      return;
+    }
+
+    response.status(201).json({
+      user: toAuthUser(user),
+      token: createToken({ sub: String(user.id), email: user.email, username: user.username, pLevel: user.playerLevel, },
+        60 * 60 * 24)
+    });
+  } catch (err: unknown) {
+    response.status(500).json({
+      error: `Internal server error: ${err?.message}`
+    })
   }
 
-  response.status(201).json({
-    user: toAuthUser(user),
-    token: createToken({sub: String(user.id),email: user.email,username: user.username,pLevel: user.playerLevel,}, 60 * 60 * 24)
-  });
 }
 
 export async function signin(request: Request, response: Response): Promise<void> {
-  const user = await signIn(request.body as SigninInput);
-  if (!user) {
-    response.status(401).json({ error: 'Invalid email or password' });
-    return;
-  }
+  try {
+    const user = await signIn(request.body);
+    if (!user) {
+      response.status(404).json({ error: 'Invalid email or password' });
+      return;
+    }
+    response.status(200).json({
+      user: toAuthUser(user),
+      token: createToken({
+        sub: String(user.id), email: user.email, username: user.username, pLevel: user.playerLevel
+      }, 60 * 60 * 24),
+    });
+  } catch (err) {
+    response.status(500).json({
+      error: `Internal server error: ${err?.message}`
+    })
+  };
 
-  response.json({
-    user: toAuthUser(user),
-    token: createToken({ sub: String(user.id),email: user.email,username: user.username, pLevel: user.playerLevel}, 60 * 60 * 24),
-  });
 }
 
 function toAuthUser(user: {
@@ -64,7 +80,7 @@ function toAuthUser(user: {
   };
 }
 
-export async function requestPasswordReset(request: Request,response: Response): Promise<void> {
+export async function requestPasswordReset(request: Request, response: Response): Promise<void> {
   const user = await resetPassword(request.body as PasswordResetRequestInput);
   if (!user) {
     response.json({ message: 'If the account exists, a reset token has been generated' });
@@ -78,7 +94,7 @@ export async function requestPasswordReset(request: Request,response: Response):
   });
 }
 
-export async function confirmPasswordReset( request: Request,  response: Response): Promise<void> {
+export async function confirmPasswordReset(request: Request, response: Response): Promise<void> {
   const { token, password } = request.body as PasswordResetConfirmInput;
   try {
     const claims = verifyToken(token);

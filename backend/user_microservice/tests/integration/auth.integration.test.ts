@@ -1,44 +1,55 @@
-import { test, expect, describe} from 'vitest'; 
-import request from 'supertest'; 
+import { test, expect, describe, vi, beforeEach } from 'vitest';
+import request from 'supertest';
 import { app } from '../../src/app'
 import { createTestUser } from '../helpers/testHelpers';
+import { Buffer } from 'node:buffer';
+import { upload } from '../../src/utils/uploader';
 
+vi.mock("#utils/uploader", () => ({
+  upload: vi.fn()
+}));
 
-describe("User Signup & Login Workflows Tests", () => {
-  
+describe("SIGNUP & LOGIN WORKFLOW", () => {
+  beforeEach(() => {
+    // mocks a cleared because they remember past data and return values which can be problematic
+    vi.clearAllMocks();
+    vi.mocked(upload).mockResolvedValue("https://cloudinary.com/smaple/test-avatar")
+  })
+
   describe("POST: auth/signup", () => {
     test("User creates account with valid details", async () => {
       const res = await request(app)
         .post("/api/v1/auth/signup")
-        .send({
-          email: "test@gmail.com",
-          username: "testman",
-          password: "testman2",
-          playerLevel: "2",
-          rank: "3",
-          bio: "My humble bio",
-          bgClass: "bg-yellow-400",
-          avatarUrl: "https://cloudinary.com/smaple/test-avatar"
-        })
-        .expect(200)
+        .field('email', 'jane@example.com')
+        .field('username', 'janedoe')
+        .field('password', 'supersecret123')
+        .field('playerLevel', '42')
+        .field('rank', 'Diamond')
+        .field('bio', 'My humble bio')
+        .field('bgClass', 'bg-yellow-400')
+        .attach("avatar", Buffer.from("fake-buffer-for-image"), { filename: "profile.png", contentType: "image/png" })
+        .expect(201)
 
-      expect(res.status).toBe(201);
+      if (res.error) console.error("Error: ", res.error);
+      expect(upload).toHaveBeenCalled();
       expect(res.body).not.toBeUndefined();
+      expect(res.body).toHaveProperty("user");
+      expect(res.body).toHaveProperty("token");
+      expect(res.body.token).toBeDefined();
+      expect(res.body.user).toBeDefined();
     });
 
-    test("Rejects invalid request data", async () => {
+    test("Invalid signup request body should be rejected", async () => {
       const res = await request(app)
-        .post("/api/v1/auth/register")
-        .send({
-          email: "test@gmail.com",
-          username: "testman",
-          playerLevel: "2",
-          rank: "3",
-          bio: "My humble bio",
-          bgClass: "bg-yellow-400",
-          avatarUrl: "https://cloudinary.com/smaple/test-avatar"
-        })
-        .expect(400)
+        .post("/api/v1/auth/signup")
+        .field('email', 'jane@example.com')
+        .field('username', 'janedoe')
+        .field('playerLevel', '42')
+        .field('rank', 'Diamond')
+        .field('bio', 'My humble bio')
+        .field('bgClass', 'bg-yellow-400')
+        .attach("avatar", Buffer.from("fake-buffer-for-image"), { filename: "profile.png", contentType: "image/png" })
+        .expect(400);
 
       expect(res.status).toBe(400);
       expect(res.body).not.toBeUndefined();
@@ -47,18 +58,53 @@ describe("User Signup & Login Workflows Tests", () => {
 
   describe("POST: auth/login", () => {
     test("User is able to login with valid details", async () => {
-      const {email, rawPassword} = await createTestUser()
+      const { email, rawPassword } = await createTestUser();
       const res = await request(app)
         .post("/api/v1/auth/login")
         .send({
           email: email,
-          password: rawPassword,
+          password: { plain_text: rawPassword },
         })
         .expect(200)
 
-      expect(res.status).toBe(201);
+      expect(res.body).not.toBeUndefined();
+    });
+    test("Should not allow login with invalid password", async () => {
+      const { email } = await createTestUser();
+      const res = await request(app)
+        .post("/api/v1/auth/login")
+        .send({
+          email: email,
+          password: { plain_text: "newPasowrd" },
+        })
+        .expect(404)
+
       expect(res.body).not.toBeUndefined();
     })
-  })
 
+
+    test("Should not allow login with invalid email", async () => {
+      const { rawPassword } = await createTestUser();
+      const res = await request(app)
+        .post("/api/v1/auth/login")
+        .send({
+          email: "someone.now@gmail.com",
+          password: { plain_text: rawPassword },
+        })
+        .expect(404)
+      expect(res.body).not.toBeUndefined();
+    });
+
+    test("Should reject invalid body schema", async () => {
+      const { email } = await createTestUser();
+      const res = await request(app)
+        .post("/api/v1/auth/login")
+        .send({
+          email: email,
+        })
+        .expect(400)
+
+      expect(res.body).not.toBeUndefined();
+    });
+  })
 })

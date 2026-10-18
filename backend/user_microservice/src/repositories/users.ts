@@ -1,7 +1,7 @@
 import { desc, eq, or } from 'drizzle-orm';
 import { db } from '#config/database';
 import { Users } from '#db/schema';
-import type {PasswordResetRequestInput,SigninInput,SignupData} from '#schemas/auth';
+import type { PasswordResetRequestInput, SigninInput, SignupData } from '#schemas/auth';
 import { hashPassword, verifyPassword } from '#utils/crypto';
 
 
@@ -43,15 +43,16 @@ export async function signIn(data: SigninInput): Promise<StoredUser | undefined>
   const [user] = await db
     .select()
     .from(Users)
-    .where(data.email ? eq(Users.email, data.email) : eq(Users.username, data.username!))
+    .where(eq(Users.email, data.email))
     .limit(1);
-
-  if (!user || !(await verifyPassword(data.password, user.password))) {
+  // if user is invalid returns undefined
+  if (!user ) {
     return undefined;
   }
-
-  return user;
+  const isvalid = await verifyPassword(data.password, user.password)
+  return isvalid? user: undefined;
 }
+
 
 export async function updateUser(
   userId: number,
@@ -87,11 +88,11 @@ export async function resetPassword(data: PasswordResetRequestInput): Promise<St
   return user;
 }
 
-export async function resetPassoword( data: PasswordResetRequestInput): Promise<StoredUser | undefined> {
+export async function resetPassoword(data: PasswordResetRequestInput): Promise<StoredUser | undefined> {
   return resetPassword(data);
 }
 
-export async function confirmPasswordReset(userId: number,password: string): Promise<StoredUser | undefined> {
+export async function confirmPasswordReset(userId: number, password: string): Promise<StoredUser | undefined> {
   const [user] = await db
     .update(Users)
     .set({ password: await hashPassword(password) })
