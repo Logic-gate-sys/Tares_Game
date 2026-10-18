@@ -3,8 +3,8 @@ import { env } from '../../src/env.ts';
 
 export const pool = new Pool({ connectionString: env.DATABASE_URL });
 
-// setup database with some schema to start with 
-export async function setup() {  
+// setup database with some schema to start with
+export async function setup() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
@@ -16,11 +16,15 @@ export async function setup() {
       bio TEXT NOT NULL,
       bg_class VARCHAR(250) NOT NULL,
       avatar_url TEXT NOT NULL,
-      total_score INTEGER NOT NULL,
+      total_score INTEGER NOT NULL DEFAULT 0,
+      wins DOUBLE PRECISION NOT NULL DEFAULT 0,
+      accuracy INTEGER NOT NULL DEFAULT 0,
       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      last_login TIMESTAMP NOT NULL DEFAULT NOW()) `);
+      last_login TIMESTAMP NOT NULL DEFAULT NOW()) `
+  );
 }
 
+// Tear down 
 export async function teardown() {
   await pool.query('TRUNCATE TABLE users RESTART IDENTITY CASCADE');
   await pool.end();

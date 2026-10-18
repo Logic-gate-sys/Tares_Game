@@ -32,6 +32,8 @@ down:
 	docker compose --profile dev --profile prod down
 up:
 	docker compose --profile dev up --build --remove-orphans user-db  test-userdb game-db redis user-service wss-service dev-gateway
+user-testDB-up: 
+	docker compose --profile dev up --build --remove-orphans test-userdb
 
 logs:
 	docker compose --profile dev --profile prod logs -f
@@ -45,7 +47,7 @@ test: test-user test-wss
 	cd client && npm test -- --run
 
 test-user:
-	cd backend/user_microservice && npm test -- --run
+	cd backend/user_microservice && npm run test
 
 test-wss:
 	cd backend/wss_microservice && go test ./...

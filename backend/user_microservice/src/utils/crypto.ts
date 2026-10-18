@@ -20,7 +20,7 @@ export function verifyPassword(password: string, storedHash: string): Promise<bo
   return bcrypt.compare(password, storedHash);
 }
 
-export function createToken(payload: Record<string, string>,expiresInSeconds: number): string {
+export function createToken(payload: Record<string, string>, expiresInSeconds: number): string {
   return jwt.sign(
     payload,
     env.AUTH_SECRET, {
@@ -35,4 +35,3 @@ export function verifyToken(token: string): TokenClaims {
   }
   return payload as TokenClaims;
 }
-

@@ -15,7 +15,7 @@ const upload = multer({
   },
 });
 
-router.post(['/register', '/signup'],upload.single('avatar'), validateRequestBody(signupSchema), signup);
+router.post(['/register', '/signup'], upload.single('avatar'), validateRequestBody(signupSchema), signup);
 router.post('/login', validateRequestBody(signinSchema), signin);
 router.post('/forgot-password', validateRequestBody(passwordResetRequestSchema), requestPasswordReset);
 router.post('/reset-password', validateRequestBody(passwordResetConfirmSchema), confirmPasswordReset);
