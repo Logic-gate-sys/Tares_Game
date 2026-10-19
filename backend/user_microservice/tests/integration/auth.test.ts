@@ -3,7 +3,8 @@ import request from 'supertest';
 import { app } from '../../src/app'
 import { createTestUser } from '../helpers/testHelpers';
 import { Buffer } from 'node:buffer';
-import { upload } from '../../src/utils/uploader';
+import { upload } from '#utils/uploader';
+
 
 vi.mock("#utils/uploader", () => ({
   upload: vi.fn()
@@ -105,6 +106,18 @@ describe("SIGNUP & LOGIN WORKFLOW", () => {
         .expect(400)
 
       expect(res.body).not.toBeUndefined();
+    });
+  });
+
+  describe("POST: /api/auth/password-reset", () => {
+    test("User should be able to get reset password link with valid details", async () => {
+      //create user 
+      const { email } = await createTestUser();
+      const res = await request(app)
+        .post("/api/v1/auth/forgot-password")
+        .send({ email: email })
+        .expect(200);
+      expect(res.body).toHaveProperty("resetToken");
     });
   })
 })

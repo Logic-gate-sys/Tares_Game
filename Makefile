@@ -32,7 +32,7 @@ down:
 	docker compose --profile dev --profile prod down
 up:
 	docker compose --profile dev up --build --remove-orphans user-db  test-userdb game-db redis user-service wss-service dev-gateway
-user-testDB-up: 
+user-testDBUP: 
 	docker compose --profile dev up --build --remove-orphans test-userdb
 
 logs:
