@@ -14,7 +14,7 @@ const packageDef = protoLoader.loadSync(PROTO_PATH, {
   defaults: true,
 })
 
-const proto = (grpc.loadPackageDefinition(packageDef) as any).user.v1;
+const proto = (grpc.loadPackageDefinition(packageDef)).user.v1;
 export function startGrpcServer(port: string): grpc.Server {
   const server = new grpc.Server();
   server.addService(proto.UserService.service, { getUserStats });

@@ -3,7 +3,6 @@
 ### What Is It All About?
 It's all about the fun of wordscrable game, but this time delivered over websocket with real-time capabilities so you can challenge your friends or even complete strangers to a 'fight'. 
 Tares delivers the multiplayer capability of word scrable with intuitive UI that aims to help you relax while you have fun playing wordscrable with your friends
-
 - Tares help you polish your spelling and critical thinking & problem solving abilities while you enjoy and beat/be beaten to a fight.
 
 ## Technical Diagrams 

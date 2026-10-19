@@ -1,20 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { verifyToken } from '#utils/crypto';
 
-export interface AuthUser {
-  id: number;
-  email: string;
-  username: string;
-  pLevel: string;
-}
 
-declare global {
-  namespace Express {
-    interface Request {
-      authUser?: AuthUser;
-    }
-  }
-}
 
 export function authorize(request: Request, response: Response, next: NextFunction): void {
   const header = request.headers.authorization;

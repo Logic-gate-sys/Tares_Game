@@ -1,14 +1,14 @@
 import { desc, eq, or } from 'drizzle-orm';
 import { db } from '#config/database';
 import { Users } from '#db/schema';
-import type { PasswordResetRequestInput, SigninInput, SignupData } from '#schemas/auth';
-import { hashPassword, verifyPassword } from '#utils/crypto';
+import type {  SigninInput, SignupData } from '#schemas/auth';
+import { hashPassword } from '#utils/crypto';
 
 
 
 export type StoredUser = typeof Users.$inferSelect;
 
-export async function signUp(data: SignupData): Promise<StoredUser | undefined> {
+export async function createUser(data: SignupData): Promise<StoredUser | undefined> {
   const existing = await db
     .select({ id: Users.id })
     .from(Users)
@@ -39,18 +39,17 @@ export async function signUp(data: SignupData): Promise<StoredUser | undefined> 
   return user;
 }
 
-export async function signIn(data: SigninInput): Promise<StoredUser | undefined> {
+export async function getUserWithDetail(email: string): Promise<StoredUser|undefined> {
   const [user] = await db
     .select()
     .from(Users)
-    .where(eq(Users.email, data.email))
+    .where(eq(Users.email, email))
     .limit(1);
   // if user is invalid returns undefined
   if (!user ) {
     return undefined;
   }
-  const isvalid = await verifyPassword(data.password, user.password)
-  return isvalid? user: undefined;
+  return  user;
 }
 
 
@@ -62,14 +61,6 @@ export async function updateUser(
   return user;
 }
 
-export async function findUserById(userId: number): Promise<StoredUser | undefined> {
-  return viewUserProfile(userId);
-}
-
-export async function findUserByUsername(username: string): Promise<StoredUser | undefined> {
-  const [user] = await db.select().from(Users).where(eq(Users.username, username)).limit(1);
-  return user;
-}
 
 export async function listUsers(
   limit: number,
@@ -78,19 +69,7 @@ export async function listUsers(
   return db.select().from(Users).orderBy(desc(Users.totalScore)).limit(limit).offset(offset);
 }
 
-export async function resetPassword(data: PasswordResetRequestInput): Promise<StoredUser | undefined> {
-  const [user] = await db
-    .select()
-    .from(Users)
-    .where(eq(Users.email, data.email))
-    .limit(1);
 
-  return user;
-}
-
-export async function resetPassoword(data: PasswordResetRequestInput): Promise<StoredUser | undefined> {
-  return resetPassword(data);
-}
 
 export async function confirmPasswordReset(userId: number, password: string): Promise<StoredUser | undefined> {
   const [user] = await db
