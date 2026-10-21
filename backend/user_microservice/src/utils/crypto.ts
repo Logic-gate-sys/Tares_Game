@@ -1,7 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
 import { env } from '../env.ts';
-import { object } from 'zod/v3';
 
 const passwordRounds = 12;
 

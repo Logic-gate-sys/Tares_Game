@@ -18,16 +18,23 @@ const testUser: SignupData = {
 
 const testPayload = { email: 'someone@gmail.com', username: 'someone', id: 'i403040' }
 
-describe("User utilities & functions tests: ", () => {
+describe("User Utilities & Functions Tests: ", () => {
     test("Should create user into db given valid details", async () => {
       const user = await createUser({ ...testUser, password: await hashPassword(testUser.password) });
       expect(user?.email).toBe(testUser.email)
     });
 
+ 
   test("Should verify user password correctly", async () => {
     const hashedPassword = await hashPassword(testUser.password);
     expect(verifyPassword(testUser.password, hashedPassword))
   });
+
+  test("Should reject invalid User password", async () => {
+    const hashedPassword = await hashPassword(testUser.password);
+    const verified = await verifyPassword(testUser.password + "roeoe", hashedPassword);
+    expect(verified).toBeFalsy(); 
+  })
 
   test("Should create and verify user acess token correct", async () => {
     const token = createToken(testPayload, 1000 * 60 * 15);
@@ -44,11 +51,8 @@ describe("User utilities & functions tests: ", () => {
   });
 
   test("Should reject expire token", () => {
-    const token = createToken(testPayload, 1000);
+    const token = createToken(testPayload, 100);
     expect(token.split(".").length).toBe(3);
-    function isValidToken(){
-      return verifyToken(token.slice(0, 18))
-    }
-    expect(() => setTimeout(isValidToken, 2000)).toThrow('Expired token')
+    expect(() => verifyToken(token.slice(0, 18))).toThrow('Expired token')
   })
 })
