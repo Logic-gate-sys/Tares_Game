@@ -5,11 +5,11 @@ import { env } from '../env.ts';
 const passwordRounds = 12;
 
 export interface TokenClaims extends JwtPayload {
-  sub: string;
-  email?: string;
-  username?: string;
+  id: string;
+  email: string;
+  username: string;
   pLevel?: string;
-  purpose?: string;
+  purpose?: "authentication" | "password-reset";
 }
 
 export function hashPassword(password: string): Promise<string> {
@@ -20,9 +20,9 @@ export function verifyPassword(password: string, storedHash: string): Promise<bo
   return bcrypt.compare(password, storedHash);
 }
 
-export function createToken(payload: Record<string, string>, expiresInSeconds: number): string {
+export function createToken(payload: TokenClaims, expiresInSeconds: number): string {
   return jwt.sign(
-    payload,
+    {...payload, purpose: "authentication"},
     env.AUTH_SECRET, {
     expiresIn: expiresInSeconds,
   });
@@ -30,8 +30,9 @@ export function createToken(payload: Record<string, string>, expiresInSeconds: n
 
 export function verifyToken(token: string): TokenClaims {
   const payload = jwt.verify(token, env.AUTH_SECRET);
-  if (typeof payload === 'string' || typeof payload.sub !== 'string') {
+  if (typeof payload === 'string') {
     throw new Error('Invalid token claims');
   }
+
   return payload as TokenClaims;
 }

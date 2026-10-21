@@ -1,18 +1,58 @@
-import { describe, test, vi, beforeEach} from 'vitest'; 
-import {createUser, getUserWithDetail } from '#repositories/users'
+import { beforeEach, describe, expect, it, test, vi } from 'vitest';
+import { confirmPasswordReset, createUser, resetPassword, signIn, signUp, viewUserProfile } from '#repositories/users';
+import { SignupData } from '#schemas/auth';
+import { createToken, hashPassword, verifyPassword, verifyToken } from '#utils/crypto';
+import { hash } from 'bcrypt';
+import { id } from 'zod/v4/locales';
 
-vi.mock('#repositories/users', () => ({
-  select: vi.fn(),
-  create: vi.fn(),
-  update: vi.fn(),
-  delete: vi.fn()
-}))
+const testUser: SignupData = {
+  email: 'someone@gmail.com',
+  username: 'someone',
+  password: 'unhashed-password',
+  playerLevel: 'unknown',
+  rank: '1',
+  bio: 'My name is someone and I am so cool',
+  bgClass: 'gree-yellowish',
+  avatarUrl: 'https://cloudinary.com/my-photoes/jams'
+}
 
+const testPayload = { email: 'someone@gmail.com', username: 'someone', id: 'i403040' }
 
+describe("User Utilities & Functions Tests: ", () => {
+    test("Should create user into db given valid details", async () => {
+      const user = await createUser({ ...testUser, password: await hashPassword(testUser.password) });
+      expect(user?.email).toBe(testUser.email)
+    });
 
-describe("User Utility Functionalites", () => {
-  beforeEach(() => {
-    vi.clearAllMocks(); 
-    vi.mock(create)
+ 
+  test("Should verify user password correctly", async () => {
+    const hashedPassword = await hashPassword(testUser.password);
+    expect(verifyPassword(testUser.password, hashedPassword))
+  });
+
+  test("Should reject invalid User password", async () => {
+    const hashedPassword = await hashPassword(testUser.password);
+    const verified = await verifyPassword(testUser.password + "roeoe", hashedPassword);
+    expect(verified).toBeFalsy(); 
+  })
+
+  test("Should create and verify user acess token correct", async () => {
+    const token = createToken(testPayload, 1000 * 60 * 15);
+    expect(token.split(".").length).toBe(3);
+
+    const { username, email, pLevel } = verifyToken(token);
+    expect(username).toBe(testUser.username);
+  });
+
+  test("Should reject invalid tokens: ", () => {
+    const token = createToken(testPayload, 1000 * 60 * 15);
+    expect(token.split(".").length).toBe(3);
+    expect(() => verifyToken(token.slice(0, 18))).toThrow('jwt malformed');
+  });
+
+  test("Should reject expire token", () => {
+    const token = createToken(testPayload, 100);
+    expect(token.split(".").length).toBe(3);
+    expect(() => verifyToken(token.slice(0, 18))).toThrow('Expired token')
   })
 })
