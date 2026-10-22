@@ -33,11 +33,12 @@ export async function signup(request: Request, response: Response): Promise<void
 
 export async function signin(req: Request, res: Response): Promise<void> {
   try {
-    const {password, ...safeUser} = await getUserWithDetail(req.body.email);
-    if (!safeUser || !password) {
+    const user = await getUserWithDetail(req.body.email);
+    if (!user) {
       res.status(404).json({ error: 'Invalid email or password' });
       return;
     }
+    const { password, ...safeUser } = user; 
     // is password valid
     const isvalid = await verifyPassword(req.body.password, password);
     if (!isvalid) {

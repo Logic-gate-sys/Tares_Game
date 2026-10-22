@@ -7,14 +7,15 @@ export function validateRequestBody(schema: ZodType): RequestHandler {
     if (!result.success) {
       const error = {
         status: 400,
-        error: 'Validation failed',
+        message: 'Invalid request body',
         details: result.error.issues.map((iss) => ({
           field: iss.path.join('.'),
           message: iss.message,
         })),
       };
       
-      next(error)
+      next(error);
+      return;
     }
     
     request.body = result.data;
