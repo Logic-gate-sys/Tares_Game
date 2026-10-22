@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, test, vi } from 'vitest';
-import { confirmPasswordReset, createUser, resetPassword, signIn, signUp, viewUserProfile } from '#repositories/users';
+import { confirmPasswordReset, createUser, viewUserProfile } from '#repositories/users';
 import { SignupData } from '#schemas/auth';
 import { createToken, hashPassword, verifyPassword, verifyToken } from '#utils/crypto';
+import {upload } from '#utils/uploader'
 import { hash } from 'bcrypt';
 import { id } from 'zod/v4/locales';
 
@@ -24,7 +25,7 @@ describe("User Utilities & Functions Tests: ", () => {
       expect(user?.email).toBe(testUser.email)
     });
 
- 
+
   test("Should verify user password correctly", async () => {
     const hashedPassword = await hashPassword(testUser.password);
     expect(verifyPassword(testUser.password, hashedPassword))
@@ -33,7 +34,7 @@ describe("User Utilities & Functions Tests: ", () => {
   test("Should reject invalid User password", async () => {
     const hashedPassword = await hashPassword(testUser.password);
     const verified = await verifyPassword(testUser.password + "roeoe", hashedPassword);
-    expect(verified).toBeFalsy(); 
+    expect(verified).toBeFalsy();
   })
 
   test("Should create and verify user acess token correct", async () => {
@@ -54,5 +55,5 @@ describe("User Utilities & Functions Tests: ", () => {
     const token = createToken(testPayload, 100);
     expect(token.split(".").length).toBe(3);
     expect(() => verifyToken(token.slice(0, 18))).toThrow('Expired token')
-  })
+  });
 })

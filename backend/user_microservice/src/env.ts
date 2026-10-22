@@ -15,6 +15,7 @@ const envSchema = z.object({
   SERVER_PORT: z.coerce.number(),
   DATABASE_URL: z.string().refine((url) =>url.startsWith('postgresql://')),
   AUTH_SECRET: z.string().min(32),
+  JWT_EXPIRES_IN: z.string().describe("JWT Token expiration setting").default('7d'),
   CLOUDINARY_URL: z.string().refine((url) => url.startsWith('cloudinary://'), {message:"Invalid URL"}).optional(),
   ALLOWED_ORIGINS: z.string().default('http://localhost:5173')
     .transform((val) => val.split(",").map((origin)=> origin.trim()))
