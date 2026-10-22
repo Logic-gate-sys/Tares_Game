@@ -5,7 +5,7 @@ import { env } from '../env.ts';
 const passwordRounds = 12;
 
 export interface TokenClaims extends JwtPayload {
-  id: string;
+  id: number;
   email: string;
   username: string;
   pLevel?: string;
@@ -20,11 +20,11 @@ export function verifyPassword(password: string, storedHash: string): Promise<bo
   return bcrypt.compare(password, storedHash);
 }
 
-export function createToken(payload: TokenClaims, expiresInSeconds: number): string {
+export function createToken(payload: TokenClaims, expiresIn=1000): string {
   return jwt.sign(
     {...payload, purpose: "authentication"},
     env.AUTH_SECRET, {
-    expiresIn: expiresInSeconds,
+    expiresIn: expiresIn>1000? expiresIn: env.JWT_EXPIRES_IN,
   });
 }
 

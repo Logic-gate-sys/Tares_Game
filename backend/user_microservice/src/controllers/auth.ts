@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { confirmPasswordReset as updatePassword, getUserWithDetail, createUser, viewUserProfile } from '#repositories/users';
+import { updatePassword, getUserWithDetail, createUser, viewUserProfile } from '#repositories/users';
 import { createToken, verifyToken,verifyPassword } from '#utils/crypto';
 import { upload } from '#utils/uploader';
 import type { PasswordResetConfirmInput, SignupData } from '#schemas/auth';
@@ -13,18 +13,15 @@ export async function signup(request: Request, response: Response): Promise<void
       return;
     }
     const avatarUrl = await upload(request.file);
-    console.log("URL: ", avatarUrl)
-    const user = await createUser({ ...(request.body as SignupData), avatarUrl });
-
-    if (!user) {
+    const {password, ...safeUser} = await createUser({ ...(request.body as SignupData), avatarUrl });
+    if (!safeUser || !password) {
       response.status(409).json({ error: 'Email or username is already registered' });
       return;
     }
-
+   
     response.status(201).json({
-      user: toAuthUser(user),
-      token: createToken({ sub: String(user.id), email: user.email, username: user.username, pLevel: user.playerLevel },
-        60 * 60 * 24)
+      user:safeUser,
+      token: createToken({ id: safeUser.id, email: safeUser.email, username: safeUser.username, purpose: 'authentication' })
     });
   } catch (err: unknown) {
     response.status(500).json({
@@ -34,72 +31,46 @@ export async function signup(request: Request, response: Response): Promise<void
 
 }
 
-export async function signin(request: Request, response: Response): Promise<void> {
+export async function signin(req: Request, res: Response): Promise<void> {
   try {
-    const { email, password } = request.body; 
-    const user = await getUserWithDetail(email);
+    const user = await getUserWithDetail(req.body.email);
     if (!user) {
-      response.status(404).json({ error: 'Invalid email or password' });
+      res.status(404).json({ error: 'Invalid email or password' });
       return;
     }
+    const { password, ...safeUser } = user; 
     // is password valid
-    const isvalid = await verifyPassword(password, user.password);
+    const isvalid = await verifyPassword(req.body.password, password);
     if (!isvalid) {
-      response.status(404).json({
+      res.status(404).json({
         error: 'Invalid email or password'
       });
       return
     }
-    response.status(200).json({
-      user: toAuthUser(user),
+    res.status(200).json({
+      user:safeUser ,
       token: createToken({
-        sub: String(user.id), email: user.email, username: user.username, pLevel: user.playerLevel
-      }, 60 * 60 * 24),
+        id: safeUser.id, email: safeUser.email, username: safeUser.username, purpose: "authentication"
+      }),
     });
   } catch (err) {
-    response.status(500).json({
+    res.status(500).json({
       error: `Internal server error: ${(err as Error).message}`
     })
   };
 
 }
 
-function toAuthUser(user: {
-  id: number;
-  email: string;
-  username: string;
-  accuracy: number;
-  wins: number;
-  rank: string;
-  playerLevel: string;
-  bio: string;
-  totalScore: number;
-  createdAt: Date;
-}) {
-  return {
-    id: String(user.id),
-    email: user.email,
-    username: user.username,
-    p_level: user.playerLevel,
-    accuracy: user.accuracy,
-    rank: user.rank,
-    wins: user.wins,
-    bio: user.bio,
-    total_score: user.totalScore,
-    createdAt: user.createdAt,
-  };
-}
-
 export async function requestPasswordReset(request: Request, response: Response): Promise<void> {
   // verify user exist in db , then generate reset link link and send to user Email
-  const user = await getUserWithDetail(request.body.email);
-  if (!user) {
+  const {id, email, username} = await getUserWithDetail(request.body.email);
+  if (!email || !id) {
     // for security reasons, user is not getting to know whether email is valid or not 
     response.status(400).json({ message: 'If the account exists, a reset token has been generated'});
     return;
   }
- // INFO: have a way of sending details to client's email 
-  const token = createToken({ sub: String(user.id), purpose: 'password-reset' }, 15 * 60);
+ // INFO: send token with a link to user's inbox next  
+  const token = createToken({id, email,username, purpose:"authentication",}, 15 * 60);
   response.status(200).json({
     message: 'If the account exists, a reset token has been generated',
     resetToken: token,

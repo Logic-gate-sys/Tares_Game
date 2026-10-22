@@ -76,11 +76,11 @@ describe("SIGNUP & LOGIN WORKFLOW", () => {
         .post("/api/v1/auth/login")
         .send({
           email: email,
-          password: { plain_text: "newPasowrd" },
         })
-        .expect(404)
+        .expect(400)
 
-      expect(res.body).not.toBeUndefined();
+      expect(res.body).toHaveProperty("message", "Invalid request body");
+      expect(res.body).toHaveProperty("details")
     })
 
 

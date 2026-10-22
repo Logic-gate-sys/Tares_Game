@@ -1,7 +1,7 @@
 import { desc, eq, or } from 'drizzle-orm';
 import { db } from '#config/database';
 import { Users } from '#db/schema';
-import type {  SigninInput, SignupData } from '#schemas/auth';
+import type {   SignupData } from '#schemas/auth';
 import { hashPassword } from '#utils/crypto';
 
 
