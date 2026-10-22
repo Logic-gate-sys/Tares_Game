@@ -71,7 +71,7 @@ export async function listUsers(
 
 
 
-export async function confirmPasswordReset(userId: number, password: string): Promise<StoredUser | undefined> {
+export async function updatePassword(userId: number, password: string): Promise<StoredUser | undefined> {
   const [user] = await db
     .update(Users)
     .set({ password: await hashPassword(password) })

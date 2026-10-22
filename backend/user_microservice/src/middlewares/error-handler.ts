@@ -6,6 +6,7 @@ export const errorHandler: ErrorRequestHandler = (error, _request, response, nex
     return;
   }
   if (error.status === 400) {
+    // console.error(error)
     response.status(error.status).json({ ...error });
     return; 
   }

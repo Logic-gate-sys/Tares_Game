@@ -111,7 +111,7 @@ describe("SIGNUP & LOGIN WORKFLOW", () => {
 
   describe("POST: /api/auth/password-reset", () => {
     test("User should be able to get reset password link with valid details", async () => {
-      //create user 
+      //create user
       const { email } = await createTestUser();
       const res = await request(app)
         .post("/api/v1/auth/forgot-password")
@@ -119,5 +119,24 @@ describe("SIGNUP & LOGIN WORKFLOW", () => {
         .expect(200);
       expect(res.body).toHaveProperty("resetToken");
     });
+
+    test("User should be able to reset their passwords", async () => {
+      //create user
+      const { email } = await createTestUser();
+      const res = await request(app)
+        .post("/api/v1/auth/forgot-password")
+        .send({ email: email })
+        .expect(200);
+      expect(res.body).toHaveProperty("resetToken");
+      expect(res.body).toHaveProperty("link");
+
+      // actual reset routes
+      const resetRes = await request(app)
+        .post("/api/v1/auth/reset-password")
+        .send({ token: res.body.resetToken, password: "my-newPassword94092" })
+        .expect(200)
+
+      expect(resetRes.body).toHaveProperty("message", 'Password reset successfully, you can login now' )
+    })
   })
 })
