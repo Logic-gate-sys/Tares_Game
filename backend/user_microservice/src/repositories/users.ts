@@ -1,7 +1,7 @@
 import { desc, eq, or } from 'drizzle-orm';
 import { db } from '#config/database';
 import { Users } from '#db/schema';
-import type {   SignupData } from '#schemas/auth';
+import type { SignupData } from '#schemas/auth';
 import { hashPassword } from '#utils/crypto';
 
 
@@ -61,16 +61,16 @@ export async function updateUser(
   return user;
 }
 
-
-export async function listUsers(
-  limit: number,
-  offset: number,
-): Promise<StoredUser[]> {
-  return db.select().from(Users).orderBy(desc(Users.totalScore)).limit(limit).offset(offset);
+// List all available users for leaderboard. Paged with limit and offset 
+export async function listUsers(limit: number, offset: number): Promise<StoredUser[]> {
+  return db.select().from(Users)
+    .orderBy(desc(Users.totalScore))
+    .limit(limit)
+    .offset(offset);
 }
 
 
-
+// Updates user's password in the database 
 export async function updatePassword(userId: number, password: string): Promise<StoredUser | undefined> {
   const [user] = await db
     .update(Users)
@@ -81,6 +81,7 @@ export async function updatePassword(userId: number, password: string): Promise<
   return user;
 }
 
+ 
 export async function viewUserProfile(userId: number): Promise<StoredUser | undefined> {
   const [user] = await db
     .select()

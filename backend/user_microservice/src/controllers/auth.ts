@@ -49,7 +49,7 @@ export async function signin(req: Request, res: Response): Promise<void> {
       return
     }
     res.status(200).json({
-      user:safeUser ,
+      user: safeUser ,
       token: createToken({
         id: safeUser.id, email: safeUser.email, username: safeUser.username, purpose: "authentication"
       }),
@@ -92,7 +92,7 @@ export async function confirmPasswordReset(request: Request, response: Response)
     }
     response.json({ message: 'Password reset successfully, you can login now' });
   } catch(err) {
-    response.status(500).json({ error: err.message?? "unknown error" });
+    response.status(500).json({ error: err?.message?? "unknown error" });
   }
 }
 

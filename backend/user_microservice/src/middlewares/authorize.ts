@@ -2,30 +2,28 @@ import type { NextFunction, Request, Response } from 'express';
 import { verifyToken } from '#utils/crypto';
 
 
-
-export function authorize(request: Request, response: Response, next: NextFunction): void {
+// authorises user requests 
+export function authorize(request: Request, response: Response, next: NextFunction){
   const header = request.headers.authorization;
   if (!header?.startsWith('Bearer ')) {
-    response.status(401).json({ error: 'Bearer token is required' });
+    response.status(400).json({ error: 'Bearer token is required' });
     return;
-  }
-
+  };
+  const token = header.split(" ")[1]?? " ";
   try {
-    const payload = verifyToken(header.slice(7));
-    if (!payload.sub || !payload.email || !payload.username || !payload.pLevel) {
-      throw new Error('Invalid token claims');
+    const payload = verifyToken(token);
+    if (typeof payload === 'string') {
+      const err = Error("Invalid token");
+      next(err);
+      return;
     }
-    request.authUser = {
-      id: Number(payload.sub),
-      email: payload.email,
-      username: payload.username,
-      pLevel: payload.pLevel,
-    };
+    request.authUser = payload; 
     next();
-  } catch {
-    response.status(401).json({ error: 'Invalid or expired token' });
-  }
-}
+  } catch(err) {
+    response.status(500).json({ error: err.messsage});
+  };
+};
+
 
 export function requireLevel(minimumLevel: number) {
   return (request: Request, response: Response, next: NextFunction): void => {
@@ -33,7 +31,8 @@ export function requireLevel(minimumLevel: number) {
     if (!Number.isFinite(currentLevel) || currentLevel < minimumLevel) {
       response.status(403).json({ error: 'Insufficient permissions' });
       return;
-    }
+    };
+    // next 
     next();
   };
 }

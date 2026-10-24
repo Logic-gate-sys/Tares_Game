@@ -2,7 +2,6 @@ export interface AuthUser {
   id: number;
   email: string;
   username: string;
-  pLevel: string;
 }
 
 declare global{

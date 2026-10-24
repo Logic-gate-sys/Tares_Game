@@ -15,7 +15,6 @@ const testUser: SignupData = {
   avatarUrl: 'https://cloudinary.com/my-photoes/jams'
 }
 
-let expiredToken = '';
 const testPayload = { email: 'someone@gmail.com', username: 'someone', id: 4003 }
 
 describe("User Utilities & Functions Tests: ", () => {
@@ -46,14 +45,17 @@ describe("User Utilities & Functions Tests: ", () => {
 
   test("Should reject invalid tokens: ", () => {
     const token = createToken(testPayload, 1000 * 60 * 15);
-    expiredToken = token;
     expect(token.split(".").length).toBe(3);
     expect(() => verifyToken(token.slice(0, 18))).toThrow('jwt malformed');
   });
 
-  // test("Should reject expire token", async() => {
-  //   const token = createToken(testPayload, 1);
-  //   expect(token.split(".").length).toBe(3);
-  //   expect(() => verifyToken(expiredToken)).toThrow('Expired Token')
-  // });
+  test("Should reject expired token", async () => {
+    const token = createToken(testPayload, 1);
+    expect(token.split(".").length).toBe(3);
+  
+    // Wait past the 1-second lifetime
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+  
+    expect(() => verifyToken(token)).toThrow('jwt expired');
+  });
 })

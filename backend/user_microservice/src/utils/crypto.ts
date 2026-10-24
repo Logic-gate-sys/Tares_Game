@@ -23,9 +23,9 @@ export function verifyPassword(password: string, storedHash: string): Promise<bo
 export function createToken(payload: TokenClaims, expiresIn=0): string {
   return jwt.sign(
     { purpose:"authentication", ...payload},
-    env.AUTH_SECRET, {
-    expiresIn: expiresIn<=1? expiresIn: env.JWT_EXPIRES_IN,
-  });
+    env.AUTH_SECRET,
+    { expiresIn: expiresIn <= 1 ? expiresIn : env.JWT_EXPIRES_IN, algorithm: "HS512" }
+  );
 }
 
 export function verifyToken(token: string): TokenClaims {
