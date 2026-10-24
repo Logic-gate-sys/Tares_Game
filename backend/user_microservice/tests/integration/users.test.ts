@@ -5,7 +5,6 @@ import { app } from '../../src/app'
 import { createTestUser } from '../helpers/testHelpers';
 
 
-
 describe("User Management & Stats", () => {
   describe("GET: /api/leaderboard", () => {
     test("Returns leaderboard stats", async () => {
