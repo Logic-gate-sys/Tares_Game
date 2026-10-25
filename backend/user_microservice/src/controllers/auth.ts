@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { updatePassword, getUserWithDetail, createUser, viewUserProfile } from '#repositories/users';
-import { createToken, verifyToken,verifyPassword } from '#utils/crypto';
+import { createToken, verifyToken, verifyPassword } from '#utils/crypto';
 import { upload } from '#utils/uploader';
 import type { PasswordResetConfirmInput, SignupData } from '#schemas/auth';
 
@@ -18,10 +18,10 @@ export async function signup(request: Request, response: Response): Promise<void
       response.status(409).json({ error: 'Email or username is already registered' });
       return;
     }
-    const { password, ...safeUser } = user; 
-   
+    const { password, ...safeUser } = user;
+
     response.status(201).json({
-      user:safeUser,
+      user: safeUser,
       token: createToken({ id: safeUser.id, email: safeUser.email, username: safeUser.username, purpose: 'authentication' })
     });
   } catch (err: unknown) {
@@ -39,7 +39,7 @@ export async function signin(req: Request, res: Response): Promise<void> {
       res.status(404).json({ error: 'Invalid email or password' });
       return;
     }
-    const { password, ...safeUser } = user; 
+    const { password, ...safeUser } = user;
     // is password valid
     const isvalid = await verifyPassword(req.body.password, password);
     if (!isvalid) {
@@ -49,7 +49,7 @@ export async function signin(req: Request, res: Response): Promise<void> {
       return
     }
     res.status(200).json({
-      user: safeUser ,
+      user: safeUser,
       token: createToken({
         id: safeUser.id, email: safeUser.email, username: safeUser.username, purpose: "authentication"
       }),
@@ -63,21 +63,25 @@ export async function signin(req: Request, res: Response): Promise<void> {
 }
 
 export async function requestPasswordReset(request: Request, response: Response): Promise<void> {
-  // verify user exist in db , then generate reset link link and send to user Email
-  const user = await getUserWithDetail(request.body.email);
-  if (!user) {
-    // for security reasons, user is not getting to know whether email is valid or not 
-    response.status(400).json({ message: 'If the account exists, a reset token has been generated'});
-    return;
+  try {
+    // verify user exist in db , then generate reset link link and send to user Email
+    const user = await getUserWithDetail(request.body.email);
+    if (!user) {
+      // for security reasons, user is not getting to know whether email is valid or not
+      response.status(400).json({ message: 'If the account exists, a reset token has been generated' });
+      return;
+    }
+    const { id, email, username } = user;
+    // INFO: send token with a link to user's inbox next
+    const token = createToken({ id, email, username, purpose: "password-reset" }, 15 * 60);
+    response.status(200).json({
+      link: 'https://domain.com/user-id/reset-link',
+      message: 'Reset password using this link. Link expires in 15 minutes.',
+      resetToken: token,
+    });
+  } catch (err) {
+    response.status(500).json({ error: err });
   }
-  const { id, email, username } = user; 
- // INFO: send token with a link to user's inbox next  
-  const token = createToken({id, email,username, purpose:"password-reset"}, 15*60);
-  response.status(200).json({
-    link: 'https://domain.com/user-id/reset-link',
-    message:'Reset password using this link. Link expires in 15 minutes.',
-    resetToken: token,
-  });
 }
 
 export async function confirmPasswordReset(request: Request, response: Response): Promise<void> {
@@ -91,16 +95,20 @@ export async function confirmPasswordReset(request: Request, response: Response)
       return;
     }
     response.json({ message: 'Password reset successfully, you can login now' });
-  } catch(err) {
-    response.status(500).json({ error: err?.message?? "unknown error" });
+  } catch (err) {
+    response.status(500).json({ error: err });
   }
 }
 
 export async function profile(request: Request, response: Response): Promise<void> {
-  const user = await viewUserProfile(request.authUser!.id);
-  if (!user) {
-    response.status(404).json({ error: 'User not found' });
-    return;
+  try {
+    const user = await viewUserProfile(request.authUser!.id);
+    if (!user) {
+      response.status(404).json({ error: 'User not found' });
+      return;
+    }
+    response.json({ user: user });
+  } catch (err) {
+    response.status(500).json({ error: err })
   }
-  response.json({ user: user });
 }

@@ -1,8 +1,8 @@
-
-import { test, expect, describe} from 'vitest';
+import { test, expect, describe } from 'vitest';
 import request from 'supertest';
 import { app } from '../../src/app'
 import { createTestUser } from '../helpers/testHelpers';
+import { createToken } from '#utils/crypto';
 
 
 describe("User Management & Stats", () => {
@@ -29,15 +29,27 @@ describe("User Management & Stats", () => {
         .expect(200)
 
       const { id } = res.body.user;
-      const authHeader = { authorization: `Bearer ${res.body.token}` }
       // use authenticated token to view profile of users
       const profileRes = await request(app)
-        .get(`/api/v1/users/me/${id}`)
-        .set(authHeader)
+        .get(`/api/v1/users/${id}/profile`)
+        .set('authorization', `Bearer ${res.body.token}`)
         .expect(200)
 
-      console.log(profileRes.body);
       expect(profileRes.body).not.toBeUndefined();
     });
   });
+
+  describe("PATCH: /users/profile", () => {
+    test("Updates user with valid details", async () => {
+      const {id, email,username } = await createTestUser();
+      const token =  createToken({ id, email, username } )
+      // update user's username
+      const res = await request(app)
+        .patch("/api/v1/users/profile")
+        .set('authorization', `Bearer ${token}`)
+        .send({ username: 'newUsername' })
+        .expect(200)
+
+    })
+  })
 })
