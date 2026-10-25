@@ -24,7 +24,7 @@ export function createToken(payload: TokenClaims, expiresIn=0): string {
   return jwt.sign(
     { purpose:"authentication", ...payload},
     env.AUTH_SECRET,
-    { expiresIn: expiresIn <= 1 ? expiresIn : env.JWT_EXPIRES_IN, algorithm: "HS256" }
+    { expiresIn: expiresIn >=1 ? expiresIn : env.JWT_EXPIRES_IN, algorithm: "HS256" }
   );
 }
 

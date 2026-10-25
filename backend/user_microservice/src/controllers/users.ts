@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { listUsers, updateUser, viewUserProfile } from '#repositories/users';
-import { UpdateUserSchema } from '#schemas/auth';
+import type{ UpdateUserInput } from '#schemas/auth';
 import { z } from 'zod'; 
 
 
@@ -24,21 +24,20 @@ export async function getUserDetails(request: Request, response: Response): Prom
 export async function updateUserProfile(request: Request, response: Response): Promise<void> {
   try {
     const { id } = request.authUser;
-    const {...data} = request.body as z.infer<typeof UpdateUserSchema>;  
+    const {...data} = request.body as UpdateUserInput;  
     const user = await updateUser(id, data);
     if (!user) {
       response.status(404).json({ error: 'User not found' });
       return;
     }
-
+    
     const { password, ...refineUsr } = user;
-    response.json(refineUsr);
+    response.status(200).json(refineUsr);
   } catch (err) {
     response.status(500).json({
       error: err
     })
   }
-
 };
 
 
@@ -87,5 +86,4 @@ export async function leaderboard(request: Request, response: Response): Promise
   } catch (err) {
     response.status(500).json({ error: err })
   }
-
 };

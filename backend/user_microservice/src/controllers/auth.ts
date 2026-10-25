@@ -22,7 +22,12 @@ export async function signup(request: Request, response: Response): Promise<void
 
     response.status(201).json({
       user: safeUser,
-      token: createToken({ id: safeUser.id, email: safeUser.email, username: safeUser.username, purpose: 'authentication' })
+      token: createToken({
+        id: safeUser.id,
+        email: safeUser.email,
+        username: safeUser.username,
+        purpose: 'authentication'
+      })
     });
   } catch (err: unknown) {
     response.status(500).json({

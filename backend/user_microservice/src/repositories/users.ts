@@ -3,6 +3,7 @@ import { db } from '#config/database';
 import { Users } from '#db/schema';
 import type { SignupData } from '#schemas/auth';
 import { hashPassword } from '#utils/crypto';
+import type { UpdateUserInput } from '#schemas/auth'
 
 
 
@@ -53,11 +54,12 @@ export async function getUserWithDetail(email: string): Promise<StoredUser|undef
 }
 
 
-export async function updateUser(
-  userId: number,
-  data: { username?: string; bio?: string; avatarUrl?: string; bgClass?: string },
-): Promise<StoredUser | undefined> {
-  const [user] = await db.update(Users).set(data).where(eq(Users.id, userId)).returning();
+export async function updateUser(userId: number,data: UpdateUserInput): Promise<StoredUser|undefined> {
+  const [user] = await db.update(Users)
+    .set(data)
+    .where(eq(Users.id, userId))
+    .returning();
+  
   return user;
 }
 

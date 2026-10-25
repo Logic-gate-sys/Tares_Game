@@ -58,3 +58,4 @@ export type SignupData = SignupInput & { avatarUrl: string };
 export type SigninInput = z.infer<typeof signinSchema>;
 export type PasswordResetRequestInput = z.infer<typeof passwordResetRequestSchema>;
 export type PasswordResetConfirmInput = z.infer<typeof passwordResetConfirmSchema>;
+export type UpdateUserInput = z.infer<typeof UserUpdateSchema>; 

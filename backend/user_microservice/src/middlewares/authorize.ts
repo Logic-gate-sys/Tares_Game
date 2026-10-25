@@ -5,7 +5,7 @@ import { verifyToken } from '#utils/crypto';
 // Authorise user requests
 export function authorize(request: Request, response: Response, next: NextFunction) {
   const header = request.headers.authorization;
-  const error: { status: number, message: string } = { status: 400, message: '' };
+  const error: { status: number, message: string } = { status: 401, message: '' };
   if (!header?.startsWith('Bearer ')) {
     error.message = "Invalid token";
     next(error);
