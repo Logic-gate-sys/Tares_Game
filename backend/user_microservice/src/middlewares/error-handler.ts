@@ -9,8 +9,6 @@ export const errorHandler: ErrorRequestHandler = (error, _request, response, nex
     response.status(error.status).json({ ...error });
     return; 
   }
-  // move to next middleware in-line
-  response.status(500).json({
-    error: 'Internal Server Error'
-  })
+  // return error to user
+  response.status(500).json({error: error})
 };

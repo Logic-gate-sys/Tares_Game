@@ -13,11 +13,12 @@ export async function signup(request: Request, response: Response): Promise<void
       return;
     }
     const avatarUrl = await upload(request.file);
-    const {password, ...safeUser} = await createUser({ ...(request.body as SignupData), avatarUrl });
-    if (!safeUser || !password) {
+    const user = await createUser({ ...(request.body as SignupData), avatarUrl });
+    if (!user) {
       response.status(409).json({ error: 'Email or username is already registered' });
       return;
     }
+    const { password, ...safeUser } = user; 
    
     response.status(201).json({
       user:safeUser,
@@ -48,7 +49,7 @@ export async function signin(req: Request, res: Response): Promise<void> {
       return
     }
     res.status(200).json({
-      user:safeUser ,
+      user: safeUser ,
       token: createToken({
         id: safeUser.id, email: safeUser.email, username: safeUser.username, purpose: "authentication"
       }),
@@ -63,16 +64,18 @@ export async function signin(req: Request, res: Response): Promise<void> {
 
 export async function requestPasswordReset(request: Request, response: Response): Promise<void> {
   // verify user exist in db , then generate reset link link and send to user Email
-  const {id, email, username} = await getUserWithDetail(request.body.email);
-  if (!email || !id) {
+  const user = await getUserWithDetail(request.body.email);
+  if (!user) {
     // for security reasons, user is not getting to know whether email is valid or not 
     response.status(400).json({ message: 'If the account exists, a reset token has been generated'});
     return;
   }
+  const { id, email, username } = user; 
  // INFO: send token with a link to user's inbox next  
-  const token = createToken({id, email,username, purpose:"authentication",}, 15 * 60);
+  const token = createToken({id, email,username, purpose:"password-reset"}, 15*60);
   response.status(200).json({
-    message: 'If the account exists, a reset token has been generated',
+    link: 'https://domain.com/user-id/reset-link',
+    message:'Reset password using this link. Link expires in 15 minutes.',
     resetToken: token,
   });
 }
@@ -81,15 +84,15 @@ export async function confirmPasswordReset(request: Request, response: Response)
   const { token, password } = request.body as PasswordResetConfirmInput;
   try {
     const claims = verifyToken(token);
-    if (claims.purpose !== 'password-reset') throw new Error('Invalid reset token');
-    const user = await updatePassword(Number(claims.sub), password);
+    if (claims.purpose !== 'password-reset') throw new Error('Invalid  token');
+    const user = await updatePassword(claims.id, password);
     if (!user) {
       response.status(400).json({ error: 'Invalid reset token' });
       return;
     }
-    response.json({ message: 'Password reset successfully' });
-  } catch {
-    response.status(400).json({ error: 'Invalid or expired reset token' });
+    response.json({ message: 'Password reset successfully, you can login now' });
+  } catch(err) {
+    response.status(500).json({ error: err?.message?? "unknown error" });
   }
 }
 

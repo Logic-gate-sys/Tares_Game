@@ -1,10 +1,8 @@
-import { beforeEach, describe, expect, it, test, vi } from 'vitest';
-import { confirmPasswordReset, createUser, viewUserProfile } from '#repositories/users';
+import {  describe, expect,  test, } from 'vitest';
+import {  createUser} from '#repositories/users';
 import { SignupData } from '#schemas/auth';
 import { createToken, hashPassword, verifyPassword, verifyToken } from '#utils/crypto';
-import {upload } from '#utils/uploader'
-import { hash } from 'bcrypt';
-import { id } from 'zod/v4/locales';
+
 
 const testUser: SignupData = {
   email: 'someone@gmail.com',
@@ -17,7 +15,7 @@ const testUser: SignupData = {
   avatarUrl: 'https://cloudinary.com/my-photoes/jams'
 }
 
-const testPayload = { email: 'someone@gmail.com', username: 'someone', id: 'i403040' }
+const testPayload = { email: 'someone@gmail.com', username: 'someone', id: 4003 }
 
 describe("User Utilities & Functions Tests: ", () => {
     test("Should create user into db given valid details", async () => {
@@ -37,12 +35,12 @@ describe("User Utilities & Functions Tests: ", () => {
     expect(verified).toBeFalsy();
   })
 
-  test("Should create and verify user acess token correct", async () => {
-    const token = createToken(testPayload, 1000 * 60 * 15);
+  test("Should create and verify user acess token",() => {
+    const token = createToken(testPayload, 1);
     expect(token.split(".").length).toBe(3);
 
-    const { username, email, pLevel } = verifyToken(token);
-    expect(username).toBe(testUser.username);
+    const payload = verifyToken(token);
+    expect(payload.username).toBe(testUser.username);
   });
 
   test("Should reject invalid tokens: ", () => {
@@ -51,9 +49,13 @@ describe("User Utilities & Functions Tests: ", () => {
     expect(() => verifyToken(token.slice(0, 18))).toThrow('jwt malformed');
   });
 
-  test("Should reject expire token", () => {
-    const token = createToken(testPayload, 100);
+  test("Should reject expired token", async () => {
+    const token = createToken(testPayload, 1);
     expect(token.split(".").length).toBe(3);
-    expect(() => verifyToken(token.slice(0, 18))).toThrow('Expired token')
+  
+    // Wait past the 1-second lifetime
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+  
+    expect(() => verifyToken(token)).toThrow('jwt expired');
   });
 })
