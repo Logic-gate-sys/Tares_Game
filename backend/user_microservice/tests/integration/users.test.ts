@@ -21,24 +21,29 @@ describe("User Management & Stats", () => {
 
   describe("GET: /users/me/:id", () => {
     test("Returns user profile upon authorisation", async () => {
-      const { email, rawPassword } = await createTestUser();
-      //login
-      const res = await request(app)
-        .post("/api/v1/auth/login")
-        .send({ email, password: rawPassword })
-        .expect(200)
+      const { id, email, username } = await createTestUser();
+      const token = createToken({ id, email, username })
 
-      const { id  } = res.body.user;
       //use authenticated token to view profile of users
       const profileRes = await request(app)
         .get(`/api/v1/users/${id}/profile`)
-        .set('authorization', `Bearer ${res.body.token}`)
+        .set('authorization', `Bearer ${token}`)
         .expect(200)
 
       expect(profileRes.body).not.toBeUndefined();
       expect(profileRes.body).toHaveProperty("username"); 
       expect(profileRes.body).toHaveProperty("wins");
     });
+
+    test("Invalid URL should return 404", async () => {
+      const { email, rawPassword } = await createTestUser();
+      //login
+      await request(app)
+        .post("/api/v1/auth/login/create")
+        .send({ email, password: rawPassword })
+        .expect(404)
+
+    })
   });
 
   describe("PATCH: /users/profile", () => {
@@ -55,6 +60,7 @@ describe("User Management & Stats", () => {
       expect(res.body).toBeDefined();
       expect(res.body.username).toBe("newUsername")
     });
+
 
     test("Must not try to update with invalid request body", async () => {
       const { id, email, username } = await createTestUser();
