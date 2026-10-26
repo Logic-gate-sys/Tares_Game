@@ -30,8 +30,8 @@ func NewValidator() Validator {
 
 // Concurrently validates submitted word's correctness by comparing with the embeded dictionary words. 
 // Does not score word, but returns a boolean indicating whether word is valid or not. 
-func (vdd *Validator) ValidateWord(word string, fileName string) (bool, error) {
-	file, fileErr := dictionary.Words.Open(fileName)// text file has 200k+ words
+func (vdd *Validator) ValidateWord(word string) (bool, error) {
+	file, fileErr := dictionary.Words.Open(dictionaryFile)// text file has 200k+ words
 	if fileErr != nil {
 		return false, fmt.Errorf("Failed to open text file. Error: %v", fileErr.Error())
 	}

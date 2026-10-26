@@ -26,7 +26,6 @@ const (
 type WordEngine struct{
 	letterSet      *GameLetters // generate game letters
 	validator       Validator  // validates word with dictionary content 
-	FilePath string
 }
 
 type GameEngineInterface interface {
@@ -37,7 +36,6 @@ func NewWordEngine(filePath string) *WordEngine{
 	return &WordEngine{
 		validator: NewValidator(),
 		letterSet: NewGameLetters(),
-		FilePath: filePath, // dictionary file path
 	}
 }
 
@@ -46,7 +44,7 @@ func (we *WordEngine) ScoreWord(word string, diff Difficulty) (float32, error) {
 	word = strings.ToLower(strings.TrimSpace(word))
 	// empty strings is an automatic 0
 	if word == "" { return 0, nil	}
-	isValid, err := we.validator.ValidateWord(word, we.FilePath)
+	isValid, err := we.validator.ValidateWord(word)
 	if err != nil || !isValid {
 		return 0, err
 	}
