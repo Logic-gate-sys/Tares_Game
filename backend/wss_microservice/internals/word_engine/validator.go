@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-
 	"github.com/logic-gate-sys/wss_service/internals/dictionary"
 )
 
@@ -21,7 +20,6 @@ type ValidatorInterface interface {
 }
 
 type RoutineWorkers int
-
 const (
 	FIVE_WORKERS RoutineWorkers = 5
 )
@@ -30,65 +28,88 @@ func NewValidator() Validator {
 	return Validator{}
 }
 
+// Concurrently validates submitted word's correctness by comparing with the embeded dictionary words. 
+// Does not score word, but returns a boolean indicating whether word is valid or not. 
 func (vdd *Validator) ValidateWord(word string, fileName string) (bool, error) {
-	file, fileErr := dictionary.Words.Open("word.txt")
+	file, fileErr := dictionary.Words.Open(fileName)// text file has 200k+ words
 	if fileErr != nil {
 		return false, fmt.Errorf("Failed to open text file. Error: %v", fileErr.Error())
 	}
 	defer file.Close()
 
 	// channels for cordiantion
-	scannedWords := make(chan string, 100) // streams text to all workers
+	const batchSize int = 1000
+	batches := make(chan []string, 20)     // make 20 batches each containing 1k words
 	found := make(chan bool, 1)            // signifies word found or not
 	quit := make(chan struct{})            // give and early quit to all workers
+	var quitOnce sync.Once
 
-	// wait group
-	var wg sync.WaitGroup
-	//spawn five workers
-	//TODO: Optimised routines to read from demacated locations in words channel, to make concurrency even faster
-	for _ = range FIVE_WORKERS {
-		wg.Add(1)
-		wg.Go(func() {
-			defer wg.Done()
-			for current_word := range scannedWords {
-				select {
-				case <-quit:
-					return
-
-				default:
-				}
-				// validate word
-				if strings.TrimSpace(current_word) == word {
-					select {
-					case found <- true:
-						close(quit)
-
-					default:
-					}
-					return
-				}
-			}
-		})
-	}
-
-	// stream text from file into job channel
+  // A go routine to stream text from file into batches of []string each having 1k words shovelled into
+	// the batches channel. 
 	go func() {
+		defer close(batches)
+		
 		scanner := bufio.NewScanner(file)
-		err := scanner.Err()
-		if err != nil {
+		batch := make([]string, 0, batchSize) // batch slice of size 1k 
+		if err := scanner.Err(); err != nil {
 			fmt.Printf("Failed to read from file: %v", err)
 			return
 		}
+		
 		for scanner.Scan() {
-			select {
-			case <-quit:
-				return
-
-			case scannedWords <- scanner.Text():
+			batch = append(batch, scanner.Text())
+			if len(batch) == batchSize {
+				select{
+					case <- quit:
+					 return 
+						
+					case batches <- batch:
+				}
+				batch = make([]string, 0, batchSize) // make batch new and empty again 
 			}
+		  // for the last sets of words that may not be up to 1k 
+		  if len(batch) > 0 {
+					select{
+						case <- quit:
+						 return 
+							
+						case batches <- batch:
+					}
+				}
 		}
-		close(scannedWords) // peacefully close job channel
 	}()
+
+	
+	// wait group
+	var wg sync.WaitGroup 
+	for range FIVE_WORKERS {
+		wg.Go(func() {
+			// traverse batches
+			for batch := range batches {
+				// inspect each word in a batch 
+				for _, wordInBatch := range batch{
+					// if an unexpected quit signal is send , quit
+					select{
+						case <- quit:
+						  return 
+						default :
+					} 
+				// if word is found 
+				 if strings.TrimSpace(wordInBatch) == word {
+						select{
+							case found <- true:
+							default: 
+						}
+				// ensure quit can only be done onces 
+					quitOnce.Do(func(){close(quit)})
+					return 
+					}
+				}
+				}
+		})
+	}
+
+	
 
 	// wait for all workers in seperate go routines to finish
 	waitDone := make(chan struct{})
@@ -98,10 +119,10 @@ func (vdd *Validator) ValidateWord(word string, fileName string) (bool, error) {
 	}()
 
 	select {
-	case <-found:
+	case <- found:
 		return true, nil
 
-	case <-waitDone:
+	case <- waitDone:
 		return false, nil
 	}
 
