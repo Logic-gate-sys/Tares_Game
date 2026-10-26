@@ -7,7 +7,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
 	"github.com/gorilla/websocket"
 	"github.com/logic-gate-sys/wss_service/internals/events"
 	engine "github.com/logic-gate-sys/wss_service/internals/word_engine"
