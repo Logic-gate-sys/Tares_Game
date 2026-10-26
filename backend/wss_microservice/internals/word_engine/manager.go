@@ -1,14 +1,15 @@
 package engine
 
-
 import (
 	"strings"
 )
 
+
+
 type Difficulty int
 
 const (
-	Easy Difficulty = iota // 5 letters, more vowels
+	Easy  Difficulty = iota 
 	Medium
 	Hard
 	Extreme
@@ -23,15 +24,15 @@ const (
 
 
 type WordEngine struct{
-	letterSet      *GameLetters
-	validator       Validator
+	letterSet      *GameLetters // generate game letters
+	validator       Validator  // validates word with dictionary content 
 }
 
 type GameEngineInterface interface {
-	UserScoreWord(word string, diff Difficulty) (float32, error)
+	ScoreWord(word string, diff Difficulty) (float32, error)
 }
 
-func NewWordEngine() *WordEngine{
+func NewWordEngine(filePath string) *WordEngine{
 	return &WordEngine{
 		validator: NewValidator(),
 		letterSet: NewGameLetters(),
@@ -41,10 +42,9 @@ func NewWordEngine() *WordEngine{
 // Validates words user submit and awards scores based on validity and difficulty level of word. 
 func (we *WordEngine) ScoreWord(word string, diff Difficulty) (float32, error) {
 	word = strings.ToLower(strings.TrimSpace(word))
-	if word == "" {
-		return 0, nil
-	}
-	isValid, err := we.validator.ValidateWord(word, "words.txt")
+	// empty strings is an automatic 0
+	if word == "" { return 0, nil	}
+	isValid, err := we.validator.ValidateWord(word)
 	if err != nil || !isValid {
 		return 0, err
 	}

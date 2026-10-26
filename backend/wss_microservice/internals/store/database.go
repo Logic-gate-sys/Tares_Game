@@ -12,7 +12,8 @@ import (
 )
 
 func Open() (*sql.DB, error) {
-	_ = godotenv.Load()
+	envFiles := []string{".env", ".env.test"} 
+	_ = godotenv.Load(envFiles...)  
 	connectionString := os.Getenv("DATABASE_URL")
 	if connectionString == "" {
 		return nil, errors.New("Invalid DATABASE_URL")
