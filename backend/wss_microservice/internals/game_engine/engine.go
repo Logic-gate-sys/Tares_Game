@@ -3,6 +3,7 @@ package game_engine
 import (
 	"crypto"
 	"maps"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -23,7 +24,7 @@ type Game struct {
 	state         events.GameStateBroadcast
 	CurrentWord   string
 	ScrambledWord string
-	wordEngine     *engine.WordEngine
+	wordEngine    *engine.WordEngine
 }
 
 // ActiveRoom
@@ -56,8 +57,11 @@ type GameEngineInterface interface {
 	ManageTimer()
 }
 
-
 func NewGame(roomId string) *Game {
+	filePath := os.Getenv("DICTIONARY_FILEPATH")
+	if filePath == "" {
+		panic("Error! Invalid file path!")
+	}
 	return &Game{
 		ID: crypto.BLAKE2b_256.Size(),
 		ActiveRoom: ActiveRoom{
@@ -68,9 +72,9 @@ func NewGame(roomId string) *Game {
 			Done:       make(chan struct{}),
 		},
 		// By default assuming duration per round is 60 seconds
-		Duration: 60 * time.Second,
-		state:    events.GameStateBroadcast{},
-		wordEngine: engine.NewWordEngine(),
+		Duration:   60 * time.Second,
+		state:      events.GameStateBroadcast{},
+		wordEngine: engine.NewWordEngine(filePath),
 	}
 }
 
@@ -78,19 +82,17 @@ func (g *Game) StartRound() (string, error) {
 	g.mux.Lock()
 	defer g.mux.Unlock()
 
-  letters, err := g.wordEngine.GenerateScramble()
-  if err !=nil{
-    return "Error generate scramble", err 
-  }
-  
+	letters, err := g.wordEngine.GenerateScramble()
+	if err != nil {
+		return "Error generate scramble", err
+	}
+
 	// g.CurrentWord = strings.ToLower(word)
 	g.ScrambledWord = strings.Join(letters, "")
 	g.ActiveRoom.UsedWords = make(map[string]string)
 	g.ActiveRoom.WordCounts = make(map[string]int)
 	return g.ScrambledWord, nil
 }
-
-
 
 func (g *Game) Reset() {
 	g.mux.Lock()
@@ -130,7 +132,6 @@ func (g *Game) ScoreSubmission(playerID string, word string, diff engine.Difficu
 	return score, nil
 }
 
-
 func canBuildWord(word string, letters string) bool {
 	available := make(map[rune]int)
 	for _, letter := range strings.ToLower(letters) {
@@ -144,7 +145,6 @@ func canBuildWord(word string, letters string) bool {
 	}
 	return true
 }
-
 
 // This writes to db after the end of the game, this does not apply when play quits
 func (g *Game) UpdatePlayerScore(playerId string, score float32) error {
@@ -171,7 +171,7 @@ func (g *Game) GenerateStatsReport() events.GameStateBroadcast {
 }
 
 // TODO: Game engine must only be responsible for game: word generation, scoring word.
-// Fetches current game state data for a given room and return the results as event.GameStateData. 
+// Fetches current game state data for a given room and return the results as event.GameStateData.
 func (g *Game) CurrentGameData(roomID string, round int, status events.Status, timeLeft int) events.GameStateData {
 	g.mux.Lock()
 	defer g.mux.Unlock()
@@ -180,7 +180,7 @@ func (g *Game) CurrentGameData(roomID string, round int, status events.Status, t
 	wordCounts := make(map[string]int, len(g.ActiveRoom.WordCounts))
 	maps.Copy(scores, g.ActiveRoom.Scores)
 	maps.Copy(wordCounts, g.ActiveRoom.WordCounts)
-	
+
 	return events.GameStateData{
 		RoomId:        roomID,
 		Round:         round,
@@ -191,4 +191,3 @@ func (g *Game) CurrentGameData(roomID string, round int, status events.Status, t
 		WordCounts:    wordCounts,
 	}
 }
-

@@ -9,7 +9,7 @@ import (
 )
 
 type GameLetters struct{}
-
+const dictionaryFile = "game_words.txt"
 type GameLettersInterface interface{
 	 GroupLetters() ([]string, error)
 }
@@ -37,21 +37,24 @@ func (l *GameLetters) GroupLetters() ([]string, error) {
 
 // Read embedded dictionary words and format int string arrays 
 func dictionaryWords() ([]string, error) {
-	content, err := dictionary.Words.ReadFile("words.txt")
+	file, err := dictionary.Words.Open(dictionaryFile)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load embedded dictionary: %w", err)
+		return nil, fmt.Errorf("Error loading embedded file: %w", err)
 	}
 
 	words := make([]string, 0)
-	scanner := bufio.NewScanner(strings.NewReader(string(content)))
+	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		word := strings.ToLower(strings.TrimSpace(scanner.Text()))
-		if len(word) >= 3 && len(word) <= 12 {
+		// add for words greater than 3  in length. 
+		if len(word) >= 3 && len(word) <= 30 {
 			words = append(words, word)
 		}
 	}
+	// if scanner failed to read from file. 
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
+	
 	return words, nil
 }
