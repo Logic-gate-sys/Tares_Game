@@ -24,6 +24,7 @@ export function GameLobbyGate() {
     }
     dispatch(updateRequests({ id }));
   };
+  
   if (socketStatus && socketStatus === "connected") {
     return (
       <>

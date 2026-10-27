@@ -2,13 +2,15 @@ import { config } from 'dotenv';
 import path from 'node:path';
 import { z } from 'zod';
 
-const node_env = process.env.NODE_ENV?? "dev";
-const loadedVals =config({ path: path.resolve(process.cwd(), node_env === "dev" ? ".env.dev" : node_env === "prod" ? ".env" : ".env.test")  });
+
+
+const node_env = process.env.NODE_ENV;
+console.log("NODE_ENV: ", node_env);
+const loadedVals =config({ path: path.resolve(process.cwd(), node_env =="dev"? ".env" :".env.test")  });
 if (loadedVals.error) {
   console.error(loadedVals.error)
   process.exit(1);
 }
-
 
 // environment viriable schema
 const envSchema = z.object({
@@ -30,7 +32,7 @@ if (!results.success) {
     message: iss.message
   }))
   console.error(errorMsg);
-  process.exit(1)
+  process.exit(1); // error out
 }
 
 // export env

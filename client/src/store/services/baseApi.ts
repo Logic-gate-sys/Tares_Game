@@ -9,7 +9,7 @@ export const baseApi = createApi({
   tagTypes: ['Rooms'],
   baseQuery: fetchBaseQuery({
     baseUrl,
-    credentials:"include",
+    credentials: "include",
     prepareHeaders: (headers, { getState }) => {
       const token = (getState() as RootState).auth.token;
       if (token) {

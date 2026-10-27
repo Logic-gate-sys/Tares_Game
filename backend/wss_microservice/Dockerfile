@@ -11,4 +11,5 @@ WORKDIR /app
 COPY --from=builder /out/wss-service /app/wss-service
 USER app
 EXPOSE 8081
+
 ENTRYPOINT ["/app/wss-service"]
