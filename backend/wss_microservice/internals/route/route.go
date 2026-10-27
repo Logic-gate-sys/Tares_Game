@@ -31,24 +31,57 @@ func SetupRoute(app *app.Application) *chi.Mux {
 	}))
 	roomManager := ws.NewRoomManager(app.RoomHandler.RoomStore, app.GrpcClient)
 
-	// api docs
-	router.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/yaml")
-		w.Write(docs.OpenAPISpecs)
-	})
+	// routing
+	router.Route("/api/v1", func(r chi.Router) {
+		// api docs: HTML viewer and raw spec
+		r.Get("/rooms/docs", serveSwaggerUI)
+		r.Get("/rooms/docs/openapi.yaml", serveOpenAPISpec)
 
-	// protected routes
-	router.Group(func(r chi.Router) {
-		// authenticate all routes here
-		r.Use(app.Middleware.Authenticate)
-		r.Post("/rooms", app.Middleware.RequireAuth(http.HandlerFunc(app.RoomHandler.HandleCreateRoom)))
-		r.Patch("/rooms/{id}", app.Middleware.RequireAuth(http.HandlerFunc(app.RoomHandler.HandleUpdateRoom)))
-		r.Delete("/rooms/{id}", app.Middleware.RequireAuth(http.HandlerFunc(app.RoomHandler.HandleDeleteRoom)))
-		r.Get("/rooms", app.Middleware.RequireAuth(http.HandlerFunc(app.RoomHandler.HandleGetRooms)))
-		// websocket upgrade require authorisation
-		r.Get("/ws", app.Middleware.RequireAuth(http.HandlerFunc(roomManager.HandleWS)))
+		// protected routes
+		r.Group(func(rt chi.Router) {
+			// authenticate all routes here
+			rt.Use(app.Middleware.Authenticate)
+			rt.Post("/rooms", app.Middleware.RequireAuth(http.HandlerFunc(app.RoomHandler.HandleCreateRoom)))
+			rt.Patch("/rooms/{id}", app.Middleware.RequireAuth(http.HandlerFunc(app.RoomHandler.HandleUpdateRoom)))
+			rt.Delete("/rooms/{id}", app.Middleware.RequireAuth(http.HandlerFunc(app.RoomHandler.HandleDeleteRoom)))
+			rt.Get("/rooms", app.Middleware.RequireAuth(http.HandlerFunc(app.RoomHandler.HandleGetRooms)))
+			// websocket upgrade require authorisation
+			rt.Get("/ws", app.Middleware.RequireAuth(http.HandlerFunc(roomManager.HandleWS)))
+		})
 	})
 
 	// export router
 	return router
+}
+
+const swaggerUIHTML = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rooms API Docs</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script>
+    window.onload = () => {
+      SwaggerUIBundle({
+        url: "/api/v1/rooms/docs/openapi.yaml",
+        dom_id: "#swagger-ui",
+      });
+    };
+  </script>
+</body>
+</html>`
+
+func serveSwaggerUI(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write([]byte(swaggerUIHTML))
+}
+
+func serveOpenAPISpec(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/yaml")
+	w.Write(docs.OpenAPISpecs)
 }
