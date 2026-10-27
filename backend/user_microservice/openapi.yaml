@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Tares User Microservice
-  description: Internal user API for the Tares platform.
+  description: Internal user userapi for the Tares platform.
   contact:
     name: Logic Gate
     url: https://www.craftrr.dev
@@ -23,7 +23,7 @@ paths:
                 properties:
                   uptime: { type: number }
                   timestamp: { type: number }
-  /api/v1/auth/register:
+  /useruserapi/v1/auth/register:
     post:
       description: Register a user with an optional avatar image.
       requestBody:
@@ -50,7 +50,7 @@ paths:
               schema: { $ref: '#/components/schemas/AuthenticationResponse' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '409': { $ref: '#/components/responses/Conflict' }
-  /api/v1/auth/login:
+  /userapi/v1/auth/login:
     post:
       description: Authenticate with an email or username.
       requestBody:
@@ -72,35 +72,8 @@ paths:
               schema: { $ref: '#/components/schemas/AuthenticationResponse' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
-  /api/v1/auth/refresh:
-    post:
-      description: Generate a new access token from a refresh token.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [refreshToken]
-              properties:
-                refreshToken: { type: string }
-      responses:
-        '200': { description: Tokens refreshed }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-  /api/v1/auth/logout:
-    post:
-      description: Revoke an active refresh token.
-      security: [{ bearerAuth: [] }]
-      responses:
-        '200':
-          description: Session revoked
-          content:
-            application/json:
-              schema:
-                type: object
-                properties: { success: { type: boolean, example: true } }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-  /api/v1/auth/forgot-password:
+ 
+  /userapi/v1/auth/forgot-password:
     post:
       description: Request a password reset token.
       requestBody:
@@ -115,7 +88,7 @@ paths:
       responses:
         '200': { description: Reset request accepted }
         '400': { $ref: '#/components/responses/BadRequest' }
-  /api/v1/auth/reset-password:
+  /userapi/v1/auth/reset-password:
     post:
       description: Consume a password reset token.
       requestBody:
@@ -131,7 +104,8 @@ paths:
       responses:
         '200': { description: Password updated }
         '400': { $ref: '#/components/responses/BadRequest' }
-  /api/v1/users/me:
+        
+  /userapi/v1/users/:id/profile:
     get:
       description: Fetch the authenticated user's profile.
       security: [{ bearerAuth: [] }]
@@ -142,13 +116,13 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/User' }
         '401': { $ref: '#/components/responses/Unauthorized' }
-  /api/v1/users/me/stats:
+        
+  /userapi/v1/users/leaderboard:
     get:
-      description: Fetch the authenticated user's game statistics.
-      security: [{ bearerAuth: [] }]
+      description: Fetch the global game statistics.
       responses:
         '200':
-          description: Current user statistics
+          description: Game users statistics
           content:
             application/json:
               schema:
@@ -179,7 +153,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/User' }
         '401': { $ref: '#/components/responses/Unauthorized' }
-  /api/v1/users/{id}:
+  /userapi/v1/users/{id}:
     get:
       description: Get a public profile by ID.
       parameters:
@@ -194,7 +168,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/User' }
         '404': { $ref: '#/components/responses/NotFound' }
-  /api/v1/users/by-username/{username}:
+  /userapi/v1/users/by-username/{username}:
     get:
       description: Get a public profile by username.
       parameters:
@@ -209,7 +183,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/User' }
         '404': { $ref: '#/components/responses/NotFound' }
-  /api/v1/leaderboard:
+  /userapi/v1/leaderboard:
     get:
       description: Return users ordered by total score.
       parameters:

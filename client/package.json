@@ -5,7 +5,7 @@
     "main": "./src/main.tsx",
     "type": "module",
     "scripts": {
-        "dev": "concurrently --kill-others -n backend-compose,client -c magenta,green \"npm:start:backend\"  \"npm:dev:client\" ",
+        "dev": "concurrently --kill-others -n backend-compose,client -c blue,green \"npm:start:backend\"  \"npm:dev:client\" ",
         "dev:client": "vite ",
         "start:backend": "cd .. && docker compose --profile dev up --build --remove-orphans user-db game-db redis user-service wss-service dev-gateway",
         "test": "vitest run --coverage",
