@@ -3,13 +3,12 @@ import jwt, { type JwtPayload } from 'jsonwebtoken';
 import { env } from '../env.ts';
 
 const passwordRounds = 12;
-
 export interface TokenClaims extends JwtPayload {
   id: number;
   email: string;
   username: string;
   pLevel?: string;
-  purpose?: "authentication" | "password-reset" ;
+  purpose?: "authentication"|"password-reset";
 }
 
 export function hashPassword(password: string): Promise<string> {
@@ -33,6 +32,5 @@ export function verifyToken(token: string): TokenClaims {
   if (typeof payload === 'string') {
     throw new Error('Invalid token claims');
   } 
-
   return payload as TokenClaims;
 }

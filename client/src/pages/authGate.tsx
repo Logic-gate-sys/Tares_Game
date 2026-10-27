@@ -44,21 +44,19 @@ export function AuthGate() {
   useEffect(() => {
     if (!state.token || state.status !== "is-authenticated") return;
     const protocol = location.protocol === "https:" ? "wss" : "ws";
-    const apiBaseUrl = import.meta.env.VITE_BASE_URL ?? window.location.origin;
+    const apiBaseUrl = import.meta.env.VITE_BASE_URL;
     const socketBaseUrl = apiBaseUrl.replace(/^https?/, protocol);
     dispatch(connectSocket({
       url: `${socketBaseUrl}/ws?token=${encodeURIComponent(state.token)}`,
     }));
   }, [dispatch, state.status, state.token]);
 
+  // Login/signup action 
   const handleSubmitAction = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (mode === "login") {
-      const loginData: LoginRequest = {
-        email,
-        password: { plain_text: password }
-      };
+      const loginData: LoginRequest = { email, password: { plain_text: password } };
       try {
         await signIn(loginData).unwrap();
       } catch {
@@ -85,12 +83,12 @@ export function AuthGate() {
       }
     }
   };
-
   // Authenticated state handling
   if (state.status === "is-authenticated" && state.token) {
     return <Outlet />;
   };
 
+  
   return (
     <div className=" bg-background h-full text-on-background min-h-screen flex flex-col font-body-md overflow-x-hidden">
       {state.status === "is-loading" && <Loader isLoading={state.status==="is-loading"} />}
@@ -284,7 +282,7 @@ export function AuthGate() {
             <button
               type="button"
               onClick={() => setMode((prev) => (prev === "signup" ? "login" : "signup"))}
-              className="font-label-bold text-deep-ink hover:text-action-red transition-colors underline decoration-[2px] underline-offset-4 bg-transparent border-none cursor-pointer"
+              className="font-label-bold text-deep-ink hover:text-action-red transition-colors underline decoration-2 underline-offset-4 bg-transparent border-none cursor-pointer"
             >
               {mode === "signup"
                 ? "Already have an account? Log in"

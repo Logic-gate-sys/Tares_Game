@@ -9,6 +9,7 @@ class APIClient {
 
   constructor() {
     const baseURL = import.meta.env.VITE_BASE_URL;
+    console.log("BASEURL: ", baseURL)
     this.client = axios.create({
       baseURL,
       timeout: REQUEST_TIMEOUT, // 10 seconds request timeout
