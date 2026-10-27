@@ -1,0 +1,592 @@
+openapi: 3.0.3
+info:
+  title: WSS Service API
+  version: 1.0.0
+  description: |
+    HTTP + WebSocket gateway for room lifecycle and real-time game play.
+
+    ## Authentication
+    HTTP routes require `Authorization: Bearer <jwt>`.
+
+    The WebSocket handshake (`GET /ws`) also accepts `?token=<jwt>`, because
+    browsers cannot attach custom headers to a WebSocket connection. Prefer the
+    header whenever the client supports it, since query strings can appear in
+    proxy and access logs.
+
+    ## Transport model
+    - HTTP routes manage room persistence.
+    - `GET /ws` upgrades to a WebSocket for lobby and in-game events.
+    - Every WebSocket frame uses the envelope `{ "type": "in:lobby" | "in:game", "payload": ... }`.
+    - OpenAPI 3.0 cannot describe WebSocket message flows. The `WebSocket*` schemas
+      below document message shapes only. See the AsyncAPI note at the end of this file.
+  contact:
+    name: Logic Gate Systems
+    email: danielkpatamia@gmail.com # replace
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://api.example.com # coming soon
+    description: Production
+  - url: http://localhost:8081
+    description: Local development
+
+# Default for all routes. Routes that differ override this below.
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Docs
+    description: Developer tooling endpoints.
+  - name: Rooms
+    description: Room lifecycle management.
+  - name: WebSocket
+    description: Realtime lobby and game traffic.
+
+paths:
+  /docs:
+    get:
+      tags: [Docs]
+      operationId: getOpenApiSpec
+      summary: Fetch OpenAPI spec
+      description: |
+        Serves this specification for developer tooling.
+        Consider disabling this route in production or restricting it to internal networks.
+      security: []
+      responses:
+        "200":
+          description: OpenAPI YAML document.
+          content:
+            application/yaml:
+              schema:
+                type: string
+
+  /rooms:
+    get:
+      tags: [Rooms]
+      operationId: listRooms
+      summary: List rooms
+      description: Returns all rooms in descending creation order.
+      responses:
+        "200":
+          description: Rooms returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RoomViewModel"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    post:
+      tags: [Rooms]
+      operationId: createRoom
+      summary: Create room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoomRequest"
+            examples:
+              default:
+                summary: Typical room
+                value:
+                  name: "Word Blitz"
+                  capacity: 8
+                  icon: "sports_esports"
+                  iconBgClass: "bg-yellow-300"
+                  iconTextColorClass: "text-deep-ink"
+      responses:
+        "201":
+          description: Room created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomViewModel"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /rooms/{id}:
+    parameters:
+      - $ref: "#/components/parameters/RoomId"
+
+    patch:
+      tags: [Rooms]
+      operationId: updateRoom
+      summary: Update room
+      description: |
+        Partial update. Omitted fields keep their current values.
+        Only the room owner may update a room.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRoomRequest"
+            examples:
+              default:
+                summary: Change name, capacity, and status
+                value:
+                  name: "Word Blitz Pro"
+                  capacity: 10
+                  icon: "bolt"
+                  status: "online"
+      responses:
+        "200":
+          description: Room updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomViewModel"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    delete:
+      tags: [Rooms]
+      operationId: deleteRoom
+      summary: Delete room
+      description: Only the room owner may delete a room.
+      responses:
+        "200":
+          description: Room deleted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteSuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /ws:
+    get:
+      tags: [WebSocket]
+      operationId: connectWebSocket
+      summary: Upgrade to realtime socket
+      description: |
+        Upgrades the connection to a WebSocket and handles both lobby and game traffic.
+
+        **Client to server frame**
+        `{ "type": "in:lobby" | "in:game", "payload": <action> }`
+
+        **Lobby actions**
+        - `request:room:join`
+        - `room:join:resolve`
+
+        **Game actions**
+        - `START_GAME`
+        - `PAUSE_GAME`
+        - `RESUME_GAME`
+        - `SEND_WORD`
+        - `RESTART_GAME` (owner only, after the match finishes)
+        - `LEAVE_GAME` (returns the player to the lobby)
+      security:
+        - bearerAuth: []
+        - queryToken: []
+      parameters:
+        - in: query
+          name: token
+          required: false
+          description: |
+            JWT for clients that cannot send an `Authorization` header.
+            Ignored when the header is present.
+          schema:
+            type: string
+      responses:
+        "101":
+          description: Switching Protocols. The WebSocket connection is established.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    queryToken:
+      type: apiKey
+      in: query
+      name: token
+
+  parameters:
+    RoomId:
+      name: id
+      in: path
+      required: true
+      description: Room identifier.
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    BadRequest:
+      description: The request was malformed or failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Missing, malformed, or expired JWT.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Authenticated, but the caller is not the room owner.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: The room does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InternalError:
+      description: Unexpected server error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          example: "room not found"
+
+    DeleteSuccessResponse:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+          example: true
+
+    RoomStatus:
+      type: string
+      description: |
+        Current state of the room. Note that `waiting` and `playing` describe
+        game lifecycle, while `online` and `offline` describe availability.
+      enum: [waiting, playing, online, offline]
+
+    CreateRoomRequest:
+      type: object
+      additionalProperties: false
+      required: [name, capacity, icon, iconBgClass, iconTextColorClass]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+        capacity:
+          type: integer
+          minimum: 1
+          # add a maximum once the game rules define one
+        icon:
+          type: string
+          minLength: 1
+        iconBgClass:
+          type: string
+          minLength: 1
+        iconTextColorClass:
+          type: string
+          minLength: 1
+
+    UpdateRoomRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: At least one field must be provided.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+        capacity:
+          type: integer
+          minimum: 1
+        icon:
+          type: string
+          minLength: 1
+        status:
+          $ref: "#/components/schemas/RoomStatus"
+
+    RoomViewModel:
+      type: object
+      required:
+        - id
+        - ownerId
+        - name
+        - capacity
+        - status
+        - icon
+        - iconBgClass
+        - iconTextColorClass
+        - players
+        - playersText
+        - avatars
+        - extraPlayersCount
+      properties:
+        id:
+          type: string
+          format: uuid
+        ownerId:
+          type: string
+        name:
+          type: string
+        capacity:
+          type: integer
+        status:
+          $ref: "#/components/schemas/RoomStatus"
+        icon:
+          type: string
+        iconBgClass:
+          type: string
+        iconTextColorClass:
+          type: string
+        players:
+          type: integer
+          minimum: 0
+        playersText:
+          type: string
+        timeLeftText:
+          type: string
+        avatars:
+          type: array
+          items: {} # TODO: define an Avatar schema
+        extraPlayersCount:
+          type: integer
+          minimum: 0
+
+    # ---------- WebSocket: client to server ----------
+
+    WebSocketInboundEnvelope:
+      type: object
+      required: [type, payload]
+      description: |
+        When `type` is `in:lobby`, `payload` must be a LobbyInboundAction.
+        When `type` is `in:game`, `payload` must be a GameInboundAction.
+      properties:
+        type:
+          type: string
+          enum: ["in:lobby", "in:game"]
+        payload:
+          oneOf:
+            - $ref: "#/components/schemas/LobbyInboundAction"
+            - $ref: "#/components/schemas/GameInboundAction"
+
+    LobbyInboundAction:
+      description: Lobby actions, discriminated by `action`.
+      oneOf:
+        - $ref: "#/components/schemas/RequestRoomJoinAction"
+        - $ref: "#/components/schemas/RoomJoinResolveAction"
+      discriminator:
+        propertyName: action
+        mapping:
+          request:room:join: "#/components/schemas/RequestRoomJoinAction"
+          room:join:resolve: "#/components/schemas/RoomJoinResolveAction"
+
+    RequestRoomJoinAction:
+      type: object
+      additionalProperties: false
+      required: [action, value]
+      properties:
+        action:
+          type: string
+          enum: ["request:room:join"]
+        value:
+          type: object
+          additionalProperties: false
+          required: [roomId]
+          properties:
+            roomId:
+              type: string
+              format: uuid
+
+    RoomJoinResolveAction:
+      type: object
+      additionalProperties: false
+      required: [action, value]
+      properties:
+        action:
+          type: string
+          enum: ["room:join:resolve"]
+        value:
+          type: object
+          additionalProperties: false
+          required: [requestId, accepted]
+          properties:
+            requestId:
+              type: string
+            accepted:
+              type: boolean
+
+    GameInboundAction:
+      description: Game actions, discriminated by `action`.
+      oneOf:
+        - $ref: "#/components/schemas/StartGameAction"
+        - $ref: "#/components/schemas/PauseGameAction"
+        - $ref: "#/components/schemas/ResumeGameAction"
+        - $ref: "#/components/schemas/SendWordAction"
+        - $ref: "#/components/schemas/RestartGameAction"
+        - $ref: "#/components/schemas/LeaveGameAction"
+      discriminator:
+        propertyName: action
+        mapping:
+          START_GAME: "#/components/schemas/StartGameAction"
+          PAUSE_GAME: "#/components/schemas/PauseGameAction"
+          RESUME_GAME: "#/components/schemas/ResumeGameAction"
+          SEND_WORD: "#/components/schemas/SendWordAction"
+          RESTART_GAME: "#/components/schemas/RestartGameAction"
+          LEAVE_GAME: "#/components/schemas/LeaveGameAction"
+
+    GameControlValue:
+      type: object
+      # Carried over from the original draft. Confirm the expected shape.
+      additionalProperties:
+        type: integer
+
+    StartGameAction:
+      type: object
+      additionalProperties: false
+      required: [action, value]
+      properties:
+        action:
+          type: string
+          enum: [START_GAME]
+        value:
+          $ref: "#/components/schemas/GameControlValue"
+
+    PauseGameAction:
+      type: object
+      additionalProperties: false
+      required: [action, value]
+      properties:
+        action:
+          type: string
+          enum: [PAUSE_GAME]
+        value:
+          $ref: "#/components/schemas/GameControlValue"
+
+    ResumeGameAction:
+      type: object
+      additionalProperties: false
+      required: [action, value]
+      properties:
+        action:
+          type: string
+          enum: [RESUME_GAME]
+        value:
+          $ref: "#/components/schemas/GameControlValue"
+
+    SendWordAction:
+      type: object
+      additionalProperties: false
+      required: [action, value]
+      properties:
+        action:
+          type: string
+          enum: [SEND_WORD]
+        value:
+          type: object
+          additionalProperties: false
+          required: [word]
+          properties:
+            word:
+              type: string
+              minLength: 3
+              maxLength: 30 # matches the dictionary filter in the word engine
+
+    RestartGameAction:
+      type: object
+      additionalProperties: false
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [RESTART_GAME]
+
+    LeaveGameAction:
+      type: object
+      additionalProperties: false
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [LEAVE_GAME]
+
+    # ---------- WebSocket: server to client ----------
+
+    WebSocketOutboundEnvelope:
+      type: object
+      required: [type, payload]
+      properties:
+        type:
+          type: string
+          enum: ["in:lobby", "in:game"]
+        payload:
+          oneOf:
+            - $ref: "#/components/schemas/LobbyBroadcast"
+            - $ref: "#/components/schemas/GameBroadcast"
+
+    LobbyBroadcast:
+      type: object
+      required: [which, data]
+      properties:
+        which:
+          type: string
+          enum:
+            - available:rooms
+            - rooms:new
+            - rooms:update
+            - incoming:join:request
+            - rooms:join:response
+        data: {} # TODO: reference the matching room or request schema per event
+        message:
+          type: string
+
+    GameBroadcast:
+      type: object
+      required: [which, data]
+      properties:
+        which:
+          type: string
+          enum:
+            - owner:starts:game
+            - room:new:client-joined
+            - room:to:joined-client
+            - room:client:left
+            - room:word-submitted
+        data: {} # TODO: reference the matching event schema per event
+        message:
+          type: string
+
+# AsyncAPI note: the WebSocket contract is better described in a separate
+# AsyncAPI document (asyncapi.yaml), which models channels, messages, and
+# direction. Keep this OpenAPI file for the HTTP routes.

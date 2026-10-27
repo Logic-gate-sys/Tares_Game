@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/logic-gate-sys/wss_service/internals/app"
+	"github.com/logic-gate-sys/wss_service/internals/docs"
 	"github.com/logic-gate-sys/wss_service/internals/ws"
 )
 
@@ -16,8 +17,8 @@ func SetupRoute(app *app.Application) *chi.Mux {
 	router := chi.NewRouter()
 	// 2. Configure and inject CORS middleware at the root level
 	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
-	if len(strings.Split(allowedOrigins, ","))<1{
-	  fmt.Println("Invalid allowed origins")
+	if len(strings.Split(allowedOrigins, ",")) < 1 {
+		fmt.Println("Invalid allowed origins")
 	}
 	origins := strings.Split(allowedOrigins, ",")
 	router.Use(cors.Handler(cors.Options{
@@ -30,10 +31,10 @@ func SetupRoute(app *app.Application) *chi.Mux {
 	}))
 	roomManager := ws.NewRoomManager(app.RoomHandler.RoomStore, app.GrpcClient)
 
-	// developer docs
-	router.Get("/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/yaml; charset=utf-8")
-		http.ServeFile(w, r, "openapi.yaml")
+	// api docs
+	router.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/yaml")
+		w.Write(docs.OpenAPISpecs)
 	})
 
 	// protected routes

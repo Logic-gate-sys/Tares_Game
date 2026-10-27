@@ -31,7 +31,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-    profiles: ["dev", "prod"]
+    profiles: ["test"]
 
   game-db:
     image: postgres:17-alpine
@@ -49,6 +49,23 @@ services:
       timeout: 5s
       retries: 10
     profiles: ["dev", "prod"]
+
+  game-testdb:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${GAME_DB_USER:-test_game}
+      POSTGRES_PASSWORD: ${GAME_DB_PASSWORD:-test_game}
+      POSTGRES_DB: ${GAME_DB_NAME:-test_gamedb}
+    ports:
+      - "${GAME_DB_PORT:-5434}:5432"
+    volumes:
+      - game-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    profiles: ["test"]
 
   redis:
     image: redis:7-alpine
@@ -101,7 +118,7 @@ services:
       - user-service
       - wss-service
     ports:
-      - "0.0.0.0:8081:80"
+      - "0.0.0.0:80:80"
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1/healthz | grep -q '^ok$'"]
       interval: 5s

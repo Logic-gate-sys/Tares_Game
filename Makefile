@@ -27,13 +27,14 @@ dev:
 	cd client && npm run dev
 wss_go_tidy:
 	cd backend/wss_microservice && go mod tidy
-
 down:
-	docker compose --profile dev --profile prod down
+	docker compose --profile dev --profile test --profile prod down
 up:
 	docker compose --profile dev up --build --remove-orphans user-db  test-userdb game-db redis user-service wss-service dev-gateway
 user-testDB: 
-	docker compose --profile dev up --build --remove-orphans test-userdb
+	docker compose --profile test up --build --remove-orphans test-userdb
+wss-testDB:
+	docker compose --profile test up --build --remove-orphans game-testdb
 
 logs:
 	docker compose --profile dev --profile prod logs -f
