@@ -7,7 +7,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/logic-gate-sys/wss_service/internals/utils"
 )
