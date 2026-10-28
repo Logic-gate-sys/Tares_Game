@@ -114,7 +114,7 @@ export function Lobby() {
     } else if (status === "room:out") {
       showNotice("Notice", message);
     }
-  }, [room, status, navigate, showNotice, message]);
+  }, [room, status, message]);
 
 
   return (
