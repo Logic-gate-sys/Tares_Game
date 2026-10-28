@@ -84,7 +84,7 @@ export const GameplayArena = ({ isOwner, status, timeLeft = 0, round = 0, messag
 
       {/* The Scrambled Word */}
       <div className="w-full rounded-xl border-2 border-deep-ink/20 bg-sky-blue/60 flex flex-wrap justify-center gap-sm md:gap-sm py-xl min-h-40 items-center">
-        {(scramble||'------').split('').map((letter, index) => (
+        {(scramble || '------').split('').map((letter, index) => (
           <LetterTile key={`${letter}-${index}`} letter={letter} delay={`${index / 10}s`} />
         ))}
       </div>
