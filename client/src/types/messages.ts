@@ -3,14 +3,14 @@
 import type { Room, Request } from "./entities"
 
 export type GameStatePayload = {
+  scores: { id: number, cumlativeScore: number, name: string }[];
+  wordCounts: Record<string, number>;
+  scrambledWord: string;
   roomId: string;
   round: number;
   status: "WAITING" | "COUNTDOWN" | "PLAYING" | "ROUND_OVER" | "FINISHED" | "PAUSED";
   timeLeft: number;
-  scrambledWord: string;
-  scores: Record<string, number>;
-  wordCounts: Record<string, number>;
-};
+}
 
 // Client --> Server Message format
 export type ClientMessage =
@@ -18,7 +18,7 @@ export type ClientMessage =
     type: `in:lobby`, payload:
     | { action: 'room:create', value: { name: string } } // sends message to socket
     | { action: 'room:update', value: { name: string } }
-    | { action: 'room:delete'}
+    | { action: 'room:delete' }
     | { action: 'request:room:join', value: { roomId?: string } }
     | { action: 'room:join:resolve', value: { requestId: string, accepted: boolean } } // for owner to resolve join request
     | { action: 'room:leave', value: { roomId: string } }
@@ -26,7 +26,7 @@ export type ClientMessage =
   // in game messages
   | {
     type: 'in:game', payload:
-    | { action: 'START_GAME' | 'PAUSE_GAME' | 'RESUME_GAME' | 'RESTART_GAME' | 'LEAVE_GAME', value: { userId: number}}
+    | { action: 'START_GAME' | 'PAUSE_GAME' | 'RESUME_GAME' | 'RESTART_GAME' | 'LEAVE_GAME', value: { userId: number } }
     | { action: 'SEND_WORD', value: { word: string } }
   }
 
@@ -43,9 +43,10 @@ export type ServerMessage =
   }
   | {
     type: 'in:game', payload:
-    | {which: 'room:to:joined-client',data: GameStatePayload,message?: string}
+    | { which: 'room:new:client-joined', data: { id:number, name: string, cumlativeScore: 0 } }
+    | { which: 'room:to:joined-client', data: GameStatePayload, message?: string }
     | { which: 'room:client:left', data: { name: string, message: string } }
-    | { which: 'room:new:client-joined', data: { name: string, cumlativeScore: 0 } }
+    //next level
     | {
       which: 'room:word-submitted',
       data: {

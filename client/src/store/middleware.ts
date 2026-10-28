@@ -1,7 +1,7 @@
 import { type Middleware } from "@reduxjs/toolkit";
-import { addMessage, addRequest, addRoom,updateRoom, changeSocketStatus, lobbySlice, removeRoom, setAvailableRooms } from "./slices/lobby"
-import { addLiveFeed, applyGameState, gameSlice, addPlayer} from "./slices/arena";
-import type {  ServerMessage } from "#types/messages";
+import { addMessage, addRequest, addRoom, updateRoom, changeSocketStatus, lobbySlice, removeRoom, setAvailableRooms } from "./slices/lobby"
+import {applyGameState,gameSlice, addPlayer,addLiveFeed} from "./slices/arena";
+import type { ServerMessage} from "#types/messages";
 import type { Room, Request } from "#types/entities";
 
 
@@ -35,7 +35,7 @@ export const socketMiddleware = (): Middleware => {
             }
             if (res.payload.which === "rooms:update") {
               const room = res.payload.data as Room;
-              store.dispatch(updateRoom({updatedRoom: room}));
+              store.dispatch(updateRoom({ updatedRoom: room }));
               break;
             }
 
@@ -47,44 +47,58 @@ export const socketMiddleware = (): Middleware => {
             }
             // join response could produce a rejection/acceptance
             if (res.payload.which === "rooms:join:response") {
-              const {accepted, message, room} = res.payload.data;
+              const { accepted, message, room } = res.payload.data;
               if (accepted && room) {
-                store.dispatch(applyGameState({room: room}));
-                store.dispatch(applyGameState({ status: "room:in"}));
+                store.dispatch(applyGameState({ room: room }));
+                store.dispatch(applyGameState({ status: "room:in" }));
                 store.dispatch(applyGameState({ gameState: "WAITING", message: "Waiting for the room owner to start the game" }));
               } else {
                 store.dispatch(applyGameState({ status: "room:out" }))
-                store.dispatch(addMessage(message?? "Room join request rejected"));
+                store.dispatch(addMessage(message ?? "Room join request rejected"));
               }
               break;
             }
-            // when room goes offline 
+            // when room goes offline
             if (res.payload.which === "rooms:off-line") {
               store.dispatch(removeRoom(res.payload.data));
               break;
             }
             break;
-          
-        // handling ingame events 
+
+          // handling ingame events
           case "in:game":
             switch (res.payload.which) {
-              // new client joined, add their details to live updates data
               case "room:new:client-joined":
-                console.log("CLIENT_JOIN EVENT: ", res.payload)
                 store.dispatch(addPlayer(res.payload.data));
                 break;
-              
-              // if events are for the client that joined the room 
+
+              // joined client should have overall room stat
               case "room:to:joined-client":
                 store.dispatch(applyGameState({
                   gameState: res.payload.data.status,
                   timer: res.payload.data.timeLeft,
-                  round: { roundNo: res.payload.data.round, totalRound: 5 },
+                  round: { roundNo: res.payload.data.round },
+                  scramble: res.payload.data.scrambledWord ?? "",
+                  playersStats: res.payload.data.scores,
+                  wordCounts: res.payload.data.wordCounts,
+                  message: res.payload.message,
+                }));
+                break;
+
+              case "owner:starts:game":
+                store.dispatch(applyGameState({
+                  gameState: res.payload.data.status,
+                  timer: res.payload.data.timeLeft,
+                  round: { roundNo: res.payload.data.round },
                   scramble: res.payload.data.scrambledWord ?? "",
                   scores: res.payload.data.scores,
                   wordCounts: res.payload.data.wordCounts,
                   message: res.payload.message,
                 }));
+                break;
+
+              // when client left room notify players and update player records in real-time
+              case "room:client:left":
                 break;
 
               case "room:word-submitted":
@@ -99,22 +113,6 @@ export const socketMiddleware = (): Middleware => {
                     wordCounts: res.payload.data.state.wordCounts,
                   }));
                 }
-                break;
-
-              // when client left room notify players and update player records in real-time
-              case "room:client:left":
-                break;
-              
-              case "owner:starts:game":
-                store.dispatch(applyGameState({
-                  gameState: res.payload.data.status,
-                  timer: res.payload.data.timeLeft,
-                  round: { roundNo: res.payload.data.round },
-                  scramble: res.payload.data.scrambledWord ?? "",
-                  scores: res.payload.data.scores,
-                  wordCounts: res.payload.data.wordCounts,
-                  message: res.payload.message,
-                }));
                 break;
 
               default:

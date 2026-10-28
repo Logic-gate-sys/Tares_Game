@@ -12,8 +12,8 @@ import { PlayerStats } from '#components/player/stats';
 export function Arena() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { room, gameState, timer, round, message, scramble,
-    scores, wordCounts, liveFeed, playersStats } = useSelector((state: RootState) => state.arena);
+  const { room, gameState, timer, round, message, scramble, scores, wordCounts,
+    liveFeed, playersStats } = useSelector((state: RootState) => state.arena);
   const { user } = useSelector((state: RootState) => state.auth);
   const playerId = user?.id !== undefined ? String(user.id) : '';
   const playerScore = scores?.[playerId] ?? 0;
@@ -29,8 +29,7 @@ export function Arena() {
     document.body.className = "bg-surface text-deep-ink font-body-md overflow-x-hidden min-h-screen bg-grid";
   }, []);
 
-  const sortedPlayers = useMemo(
-    () => [...playersStats].sort((a, b) => a.cumlativeScore - b.cumlativeScore),
+  const sortedPlayers = useMemo(() => [...playersStats].sort((a, b) => a.cumlativeScore - b.cumlativeScore),
     [playersStats]
   );
   return (
