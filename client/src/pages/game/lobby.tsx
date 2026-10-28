@@ -114,11 +114,11 @@ export function Lobby() {
     } else if (status === "room:out") {
       showNotice("Notice", message);
     }
-  }, [room, status, navigate, showNotice, message]);
+  }, [room, status, message]);
 
 
   return (
-    <div className="relative bg-surface text-on-surface min-h-screen overflow-x-hidden font-body-md selection:bg-action-red selection:text-white">
+    <div className="relative h-dvh overflow-hidden bg-surface text-on-surface min-h-screen overflow-x-hidden font-body-md selection:bg-action-red selection:text-white">
       {/* Dynamic Neubrutalism Styles Injector */}
       <style dangerouslySetInnerHTML={{
         __html: `
@@ -155,7 +155,7 @@ export function Lobby() {
         }
       `}} />
 
-      <main className="pt-24 pb-24 px-4 md:px-margin-desktop min-h-screen relative">
+      <main className="pt-2 pb-24 px-4 md:px-margin-desktop min-h-screen relative">
         {/* Stickers / Decorative elements */}
         <div className="absolute top-28 right-10 animate-float sticker z-0 hidden lg:block">
           <div className="bg-primary-container text-paper-white p-4 border-4 border-deep-ink rotate-12 text-headline-md font-headline-md neubrutalism-shadow">
@@ -169,7 +169,7 @@ export function Lobby() {
         </div>
 
         {/* Quick Join Hero */}
-        <section className="mb-xl relative z-10">
+        <section className="mb-lg relative z-10">
           <div className="bg-sky-blue border-4 border-deep-ink p-8 neubrutalism-shadow flex flex-col md:flex-row justify-between items-center gap-8">
             <div className="text-center md:text-left">
               <h2 className="text-display-lg-mobile md:text-display-lg font-display-lg text-deep-ink mb-4">

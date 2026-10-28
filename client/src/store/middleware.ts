@@ -1,6 +1,6 @@
 import { type Middleware } from "@reduxjs/toolkit";
 import { addMessage, addRequest, addRoom,updateRoom, changeSocketStatus, lobbySlice, removeRoom, setAvailableRooms } from "./slices/lobby"
-import { addLiveFeed, applyGameState, gameSlice, setPlayers} from "./slices/arena";
+import { addLiveFeed, applyGameState, gameSlice, addPlayer} from "./slices/arena";
 import type {  ServerMessage } from "#types/messages";
 import type { Room, Request } from "#types/entities";
 
@@ -24,7 +24,6 @@ export const socketMiddleware = (): Middleware => {
         const res = JSON.parse(event.data) as ServerMessage;
         switch (res.type) {
           case 'in:lobby':
-            console.log("::::Event::: ", res.payload)
             if (res.payload.which === "available:rooms") {
               store.dispatch(setAvailableRooms(res.payload.data as Room[]))
               break;
@@ -59,7 +58,7 @@ export const socketMiddleware = (): Middleware => {
               }
               break;
             }
-
+            // when room goes offline 
             if (res.payload.which === "rooms:off-line") {
               store.dispatch(removeRoom(res.payload.data));
               break;
@@ -71,14 +70,16 @@ export const socketMiddleware = (): Middleware => {
             switch (res.payload.which) {
               // new client joined, add their details to live updates data
               case "room:new:client-joined":
-                store.dispatch(setPlayers(res.payload.data));
+                console.log("CLIENT_JOIN EVENT: ", res.payload)
+                store.dispatch(addPlayer(res.payload.data));
                 break;
               
-              case "room:to:joined-client": 
+              // if events are for the client that joined the room 
+              case "room:to:joined-client":
                 store.dispatch(applyGameState({
-                  gameState: res.payload.data.status as "WAITING" | "COUNTDOWN" | "PLAYING" | "ROUND_OVER" | "FINISHED" | "PAUSED",
+                  gameState: res.payload.data.status,
                   timer: res.payload.data.timeLeft,
-                  round: { roundNo: res.payload.data.round },
+                  round: { roundNo: res.payload.data.round, totalRound: 5 },
                   scramble: res.payload.data.scrambledWord ?? "",
                   scores: res.payload.data.scores,
                   wordCounts: res.payload.data.wordCounts,

@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { BottomNav, Header } from "#components/game/arena";
+import { Header } from "#components/game/arena";
 import { AccessDenied } from "#pages/notAuthorised";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "src/store/store";
@@ -9,7 +9,8 @@ import { pushToLobby, updateRequests } from "#store/slices/lobby";
 
 export function GameLobbyGate() {
   const { socketStatus, inComingRequests, showMessages } = useSelector((state: RootState) => state.lobby);
-  const dispatch = useDispatch(); 
+  const { status, round} = useSelector((state: RootState) => state.arena)
+  const dispatch = useDispatch();
   // Owner resolves  requestor's petition
   const handlePetitionAction = (id: string, actionType: 'resolved' | 'rejected') => {
     const request = inComingRequests.find((item) => item.id === id);
@@ -24,15 +25,18 @@ export function GameLobbyGate() {
     }
     dispatch(updateRequests({ id }));
   };
-  
+
   if (socketStatus && socketStatus === "connected") {
+    const progress = (round.roundNo / round.totalRound) * 100;
     return (
-      <>
-        <Header messages={inComingRequests?.length} onShowMsg={()=> dispatch(changeShowMsgStatus(!showMessages))}/>
-        <div className="m-auto px-xl py-12 flex flex-col items-start">
+      <div className="h-fit">
+        <Header messages={inComingRequests?.length}
+          arenaDetail={{ isIn: (status !== "idle"), name:"", progress: progress }}
+          onShowMsg={() => dispatch(changeShowMsgStatus(!showMessages))} />
+        <div className="mb-24 px-xl p-fit flex flex-col items-start">
           <Outlet />
         </div>
-        <BottomNav />
+        {/*<BottomNav />*/}
         {inComingRequests.length > 0 && showMessages && (
           <div className="fixed inset-0 z-99 flex items-center justify-center p-4 bg-deep-ink/40 backdrop-blur-md">
             <div className="relative w-full max-w-2xl flex items-center justify-center min-h-75">
@@ -40,7 +44,6 @@ export function GameLobbyGate() {
               {inComingRequests.map((dt, index) => {
                 // Performance: Only render the top 4 cards visually
                 if (index > 3) return null;
-
                 // Dynamic styling based on the array index
                 const isFront = index === 0;
                 const scale = 1 - index * 0.05;
@@ -75,7 +78,7 @@ export function GameLobbyGate() {
             </div>
           </div>
         )}
-      </>);
+      </div>);
   }
 
   return (<><AccessDenied /></>)

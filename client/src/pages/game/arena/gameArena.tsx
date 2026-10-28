@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import type { RootState } from '#store/store';
@@ -12,7 +12,8 @@ import { PlayerStats } from '#components/player/stats';
 export function Arena() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { room, gameState, timer, round, message, scramble, scores, wordCounts, liveFeed } = useSelector((state: RootState) => state.arena);
+  const { room, gameState, timer, round, message, scramble,
+    scores, wordCounts, liveFeed, playersStats } = useSelector((state: RootState) => state.arena);
   const { user } = useSelector((state: RootState) => state.auth);
   const playerId = user?.id !== undefined ? String(user.id) : '';
   const playerScore = scores?.[playerId] ?? 0;
@@ -28,15 +29,15 @@ export function Arena() {
     document.body.className = "bg-surface text-deep-ink font-body-md overflow-x-hidden min-h-screen bg-grid";
   }, []);
 
+  const sortedPlayers = useMemo(
+    () => [...playersStats].sort((a, b) => a.cumlativeScore - b.cumlativeScore),
+    [playersStats]
+  );
   return (
     <>
-      <main className="min-h-screen max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-6 md:py-10 relative">
-        <div className="hidden lg:block absolute left-20 top-40 opacity-20">
-          <img alt="Game Mascot" className="w-64 rotate-[-15deg]" src="https://lh3.googleusercontent.com/aida/AP1WRLtWYV2e3BY65W_6ZafUYLDa1Xmlk7YjL2prZdJk2klHyZi6SR1ZdNyIiaSQvpMRua8-YZ8XETC1dRRN_K87dgwhq2YnKIuUX0jj74glIKns1_n4QEdbXjH9dF4QPzYa_8fDmwAN-CBkv2v5xNr13PQl3n7NhJutulwhZYixsu6Od2YnKU9V_e0pIRqiQa5lFOQAgkH-4EGPGGYw8-CW0pNCMioOvDAJgvo_yPR3nnE5AnUeI1HId26YL8qW" />
-        </div>
-
-        <div className="relative grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8 items-start">
-          <LiveFeed feed={liveFeed} />
+      <main className="max-h-screen max-w-screen mx-fit px-margin-mobile md:px-margin-desktop py-4 md:py-4 relative">
+        <div className="relative grid grid-cols-1 md:grid-cols-13 gap-6 items-start">
+          <LiveFeed feed={liveFeed} players={sortedPlayers} />
           <GameplayArena
             isOwner={room?.ownerId !== undefined && user?.id !== undefined && String(room.ownerId) === String(user.id)}
             status={gameState ?? 'WAITING'}
@@ -81,3 +82,6 @@ export function Arena() {
     </>
   );
 }
+
+
+

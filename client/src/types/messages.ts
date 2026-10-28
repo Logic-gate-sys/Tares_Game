@@ -26,7 +26,7 @@ export type ClientMessage =
   // in game messages
   | {
     type: 'in:game', payload:
-    | { action: 'START_GAME' | 'PAUSE_GAME' | 'RESUME_GAME' | 'RESTART_GAME' | 'LEAVE_GAME', value: { userId: number } }
+    | { action: 'START_GAME' | 'PAUSE_GAME' | 'RESUME_GAME' | 'RESTART_GAME' | 'LEAVE_GAME', value: { userId: number}}
     | { action: 'SEND_WORD', value: { word: string } }
   }
 
@@ -43,11 +43,7 @@ export type ServerMessage =
   }
   | {
     type: 'in:game', payload:
-    | {
-      which: 'room:to:joined-client',
-      data: GameStatePayload,
-      message?: string
-    }
+    | {which: 'room:to:joined-client',data: GameStatePayload,message?: string}
     | { which: 'room:client:left', data: { name: string, message: string } }
     | { which: 'room:new:client-joined', data: { name: string, cumlativeScore: 0 } }
     | {
