@@ -18,6 +18,7 @@ export type ClientMessage =
     type: `in:lobby`, payload:
     | { action: 'room:create', value: { name: string } } // sends message to socket
     | { action: 'room:update', value: { name: string } }
+    | { action: 'room:delete'}
     | { action: 'request:room:join', value: { roomId?: string } }
     | { action: 'room:join:resolve', value: { requestId: string, accepted: boolean } } // for owner to resolve join request
     | { action: 'room:leave', value: { roomId: string } }

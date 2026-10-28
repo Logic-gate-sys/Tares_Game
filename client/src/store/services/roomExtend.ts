@@ -20,7 +20,7 @@ export const roomApi = baseApi.injectEndpoints({
         url: `/rooms/${data.id}`,
         method: 'DELETE',
       }),
-
+      
       invalidatesTags: ['Rooms']
     }),
     updateRoom: builder.mutation <Room, Partial<Room>>({
@@ -41,6 +41,7 @@ export const roomApi = baseApi.injectEndpoints({
         */
     })
   }),
+  
   overrideExisting: false
 })
 

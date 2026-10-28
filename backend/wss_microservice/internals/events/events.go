@@ -8,7 +8,8 @@ import (
 type lobbyAction string
 
 const (
-	CreateRoom  lobbyAction = "room:create"
+	CreateRoom  lobbyAction ="room:create"
+	DeleteRoom  lobbyAction ="room:delete"
 	LeaveRoom   lobbyAction = "room:leave"
 	UpdateRoom  lobbyAction = "room:update"
 	JoinRoom    lobbyAction = "request:room:join"

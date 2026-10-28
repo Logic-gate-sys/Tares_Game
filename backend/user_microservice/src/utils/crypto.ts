@@ -19,9 +19,9 @@ export function verifyPassword(password: string, storedHash: string): Promise<bo
   return bcrypt.compare(password, storedHash);
 }
 
-export function createToken(payload: TokenClaims, expiresIn=0): string {
+export function createToken(payload: TokenClaims, expiresIn = 0): string {
   return jwt.sign(
-    { purpose:"authentication", ...payload},
+    {  ...payload,purpose:"authentication"},
     env.AUTH_SECRET,
     { expiresIn: expiresIn >=1 ? expiresIn : env.JWT_EXPIRES_IN, algorithm: "HS256" }
   );

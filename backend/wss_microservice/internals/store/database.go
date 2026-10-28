@@ -4,21 +4,23 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io/fs"
+	"os"
+
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/joho/godotenv"
 	"github.com/pressly/goose/v3"
-	"io/fs"
-	"os"
 )
 
 func Open() (*sql.DB, error) {
-	envFiles := []string{".env", ".env.test"} 
-	_ = godotenv.Load(envFiles...)  
-	connectionString := os.Getenv("DATABASE_URL")
-	if connectionString == "" {
+	// open .env file if they exists. In Docker they're automatically injected in the environment as variables
+	envFiles := []string{".env", ".env.test"}
+	_ = godotenv.Load(envFiles...)
+	connStr := os.Getenv("DATABASE_URL")
+	if connStr == "" {
 		return nil, errors.New("Invalid DATABASE_URL")
 	}
-	db, err := sql.Open("pgx", connectionString)
+	db, err := sql.Open("pgx", connStr)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +47,7 @@ func Migrate(db *sql.DB, dir string) error {
 	//migrate
 	err = goose.Up(db, dir)
 	if err != nil {
-		fmt.Println("Failed to migrate DB")
+		fmt.Printf("Failed to migrate DB: %s", err.Error())
 		return err
 	}
 

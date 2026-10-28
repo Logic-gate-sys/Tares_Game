@@ -1,17 +1,22 @@
 import { config } from 'dotenv';
 import path from 'node:path';
 import { z } from 'zod';
+import { existsSync } from 'node:fs';
 
 
 
-const node_env = process.env.NODE_ENV;
-console.log("NODE_ENV: ", node_env);
-const loadedVals =config({ path: path.resolve(process.cwd(), node_env =="dev"? ".env" :".env.test")  });
-if (loadedVals.error) {
-  console.error(loadedVals.error)
-  process.exit(1);
+const nodeEnv = process.env.NODE_ENV ?? 'development';
+const envFile = nodeEnv === 'development'? '.env':'.env.test'
+const envPath = path.resolve(process.cwd(), envFile);
+
+// Local runs load the file. In Docker it won't exist, and Compose has already set the variables.
+if (existsSync(envPath)) {
+  const loaded = config({ path: envPath, quiet: true });
+  if (loaded.error) {
+    console.error(loaded.error);
+    process.exit(1);
+  }
 }
-
 // environment viriable schema
 const envSchema = z.object({
   SERVER_PORT: z.coerce.number(),
