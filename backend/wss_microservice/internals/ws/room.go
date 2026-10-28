@@ -70,8 +70,8 @@ func (gr *GameRoom) Run() {
 			log.Printf("Client: %s joined Game-Room: %s", c.name, gr.Room.Name)
 			gr.broadCastGameStateToClientNB(c, events.GameStateBroadcast{
 				Which:   events.ToJoinedClient,
-				Data:    gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft),
-				Message: "Current game state in arena!",
+				Data:    gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft,game_engine.ToJoinedClient),
+				Message: "Welcome to Arena",
 			})
 			for client := range gr.Clients {
 				if client.UserId != c.UserId {
@@ -109,7 +109,7 @@ func (gr *GameRoom) Run() {
 							if strconv.Itoa(int(client.UserId)) == action.User.Id {
 								event := events.GameStateBroadcast{
 									Which:   events.ToJoinedClient,
-									Data:    gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft),
+									Data:    gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft,game_engine.ToExistingClients),
 									Message: "Only the room owner can start the game",
 								}
 								gr.broadCastGameStateToClientNB(client, event)
@@ -123,7 +123,7 @@ func (gr *GameRoom) Run() {
 						if strconv.Itoa(int(client.UserId)) == action.User.Id {
 							event := events.GameStateBroadcast{
 								Which:   events.ToJoinedClient,
-								Data:    gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft),
+								Data:    gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft,game_engine.ToExistingClients),
 								Message: "The game has already started",
 							}
 							gr.broadCastGameStateToClientNB(client, event)
@@ -147,7 +147,7 @@ func (gr *GameRoom) Run() {
 				for client := range gr.Clients {
 					event := events.GameStateBroadcast{
 						Which:   events.GameStarted,
-						Data:    gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft),
+						Data:    gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft,game_engine.ToExistingClients),
 						Message: "Game starting",
 					}
 					gr.broadCastGameStateToClientNB(client, event)
@@ -168,7 +168,7 @@ func (gr *GameRoom) Run() {
 				for client := range gr.Clients {
 					event := events.GameStateBroadcast{
 						Which:   events.ToJoinedClient,
-						Data:    gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft),
+						Data:    gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft,game_engine.ToExistingClients),
 						Message: "Game state updated",
 					}
 					gr.broadCastGameStateToClientNB(client, event)
@@ -187,7 +187,7 @@ func (gr *GameRoom) Run() {
 				for client := range gr.Clients {
 					event := events.GameStateBroadcast{
 						Which:   events.ToJoinedClient,
-						Data:    gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft),
+						Data:    gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft,game_engine.ToExistingClients),
 						Message: "New match ready. The room owner can start the game.",
 					}
 					gr.broadCastGameStateToClientNB(client, event)
@@ -244,7 +244,7 @@ func (gr *GameRoom) Run() {
 								"name":  action.User.Username,
 								"word":  word,
 								"score": int(score),
-								"state": gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft),
+								"state": gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft,game_engine.ToExistingClients),
 							},
 							Message: fmt.Sprintf("%s unscrambled %s", action.User.Username, word),
 						}
@@ -253,7 +253,7 @@ func (gr *GameRoom) Run() {
 					for client := range gr.Clients {
 						event := events.GameStateBroadcast{
 							Which:   events.ToJoinedClient,
-							Data:    gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft),
+							Data:    gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft,game_engine.ToExistingClients),
 							Message: "Word received",
 						}
 						gr.broadCastGameStateToClientNB(client, event)
@@ -301,7 +301,7 @@ func (gr *GameRoom) Run() {
 			for client := range gr.Clients {
 				gr.broadCastGameStateToClientNB(client, events.GameStateBroadcast{
 					Which:   events.ToJoinedClient,
-					Data:    gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft),
+					Data:    gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft,game_engine.ToExistingClients),
 					Message: "Game state updated",
 				})
 			}

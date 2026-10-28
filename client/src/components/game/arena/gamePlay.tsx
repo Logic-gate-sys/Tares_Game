@@ -31,7 +31,7 @@ export const GameplayArena = ({ isOwner, status, timeLeft = 0, round = 0, messag
   const isLowTime = timeLeft < 10;
 
   return (
-    <section className="md:col-span-6 rounded-2xl border-4 border-deep-ink bg-paper-white/70 p-4 shadow-[8px_8px_0px_0px_rgba(18,23,33,1)] backdrop-blur-sm sm:p-6 lg:p-8 space-y-lg flex flex-col items-center">
+    <section className="md:col-span-7 h-fit rounded-2xl border-4 border-deep-ink bg-paper-white/70 p-2 shadow-[8px_8px_0px_0px_rgba(18,23,33,1)] backdrop-blur-sm sm:p-4 lg:p-4 space-y-md flex flex-col items-center">
       {/* Game Clock */}
       <div className="w-full grid grid-cols-1 gap-md md:grid-cols-[1fr_auto]">
         <div className={`text-paper-white px-lg py-md border-4 border-deep-ink neubrutal-shadow ${isLowTime ? 'bg-action-red' : 'bg-deep-ink'}`}>
@@ -44,7 +44,7 @@ export const GameplayArena = ({ isOwner, status, timeLeft = 0, round = 0, messag
 
         <div className="text-paper-white px-md py-md border-4 border-deep-ink neubrutal-shadow bg-green-800">
           {status === 'FINISHED' && isOwner ? (
-            <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-[2fr_1fr] gap-2">
               <button className="px-4 py-2 text-sm font-display-lg-mobile md:text-lg leading-none border-2 border-deep-ink bg-paper-white text-deep-ink transition-transform active:scale-95" onClick={onRestart}>
                 ARRANGE ANOTHER MATCH
               </button>
@@ -90,7 +90,7 @@ export const GameplayArena = ({ isOwner, status, timeLeft = 0, round = 0, messag
       </div>
 
       {/* Input Field */}
-      <div className="w-full max-w-2xl relative group">
+      <div className="w-fit max-w-2xl relative group">
         <input
           autoFocus
           type="text"
@@ -123,7 +123,7 @@ export const GameplayArena = ({ isOwner, status, timeLeft = 0, round = 0, messag
 
 const LetterTile = ({ letter, delay }: { letter: string; delay: string }) => (
   <div
-    className="word-tile w-16 h-16 md:w-24 md:h-24 bg-paper-white border-[3px] border-deep-ink rounded-lg neubrutal-shadow flex items-center justify-center float-animation"
+    className="word-tile w-16 h-16 md:w-20 md:h-20 bg-paper-white border-[3px] border-deep-ink rounded-lg neubrutal-shadow flex items-center justify-center float-animation"
     style={{ animationDelay: delay }}
   >
     <span className="font-headline-md text-headline-md md:text-headline-lg">{letter}</span>

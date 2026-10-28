@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+
 	"github.com/gorilla/websocket"
 	"github.com/logic-gate-sys/wss_service/internals/events"
 	engine "github.com/logic-gate-sys/wss_service/internals/word_engine"
@@ -38,7 +39,11 @@ type ActiveRoom struct {
 	Done       chan struct{}
 	mu         sync.Mutex
 }
-
+type Reason string
+const (
+	ToJoinedClient Reason ="ToJoinedClient"
+	ToExistingClients Reason ="ToExistingClients"
+)
 type LetterSet struct {
 	Letters    []string // e.g: ["T","A","R","E","S","N","I"]
 	ValidWords []string // all words formable from these letters
@@ -171,7 +176,7 @@ func (g *Game) GenerateStatsReport() events.GameStateBroadcast {
 
 // TODO: Game engine must only be responsible for game: word generation, scoring word.
 // Fetches current game state data for a given room and return the results as event.GameStateData.
-func (g *Game) CurrentGameData(roomID string, round int, status events.Status, timeLeft int) events.GameStateData {
+func (g *Game) CurrentGameData(roomID string, round int, status events.Status, timeLeft int, re Reason) events.GameStateData {
 	g.mux.Lock()
 	defer g.mux.Unlock()
 
@@ -179,7 +184,13 @@ func (g *Game) CurrentGameData(roomID string, round int, status events.Status, t
 	wordCounts := make(map[string]int, len(g.ActiveRoom.WordCounts))
 	maps.Copy(scores, g.ActiveRoom.Scores)
 	maps.Copy(wordCounts, g.ActiveRoom.WordCounts)
-
+	// to what effect is this beign requested
+	if re ==ToJoinedClient {
+		return events.GameStateData{
+			RoomId: roomID,
+			Status: status,
+		}
+	}
 	return events.GameStateData{
 		RoomId:        roomID,
 		Round:         round,
