@@ -63,6 +63,7 @@ export function Lobby() {
     if (!selectedRooId) return;
     try {
       await deleteRoom({ id: selectedRooId }).unwrap();
+      dispatch(pushToLobby({ type: 'in:lobby', payload: { action: 'room:delete' } }));
       showNotice("Success", "Room deleted successfully");
       setOpenDelete(false)
     } catch (err: unknown) {
@@ -207,7 +208,6 @@ export function Lobby() {
 
             <div className="flex flex-col gap-4">
               {availableRooms.map((arena, idx) => {
-                console.log("USER_ID: ", user?.id, "OWNER_ID", arena.ownerId)
                 return <div key={idx} onClick={() => setSelectedRoomId(arena.id)}>
                   <RoomCard data={arena} isOwner={arena.ownerId ==user?.id}
                     onJoin={(event) => handleRoomJoinRequest(event, arena.id)}

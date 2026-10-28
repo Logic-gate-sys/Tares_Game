@@ -112,7 +112,7 @@ func (rm *roomManager) Run() {
 					rm.broadCastLobbyEventToClientNB(client, events.LobbyStateBroadcast{
 						Which: events.NewRoom, Data: room, Message: "New Room created"})
 				}
-      // Room updates and notifications to all connected clients 
+				// Room updates and notifications to all connected clients
 			case events.UpdateRoom:
 				var payload struct {
 					Name string `json:"name"`
@@ -130,6 +130,20 @@ func (rm *roomManager) Run() {
 				for client := range rm.lobbyClients {
 					rm.broadCastLobbyEventToClientNB(client, events.LobbyStateBroadcast{
 						Which: events.UpdatedRoom, Data: room, Message: "New Room created"})
+				}
+			case events.DeleteRoom:
+				// fetch current rooms and broadcast to all lobbyClients
+				rooms, err := rm.roomStore.GetAllRooms(context.Background())
+				if err != nil {
+					log.Println(err.Error())
+					break
+				}
+				for client := range rm.lobbyClients {
+					rm.broadCastLobbyEventToClientNB(client, events.LobbyStateBroadcast{
+						Which:   events.AvailableRooms,
+						Data:    rooms,
+						Message: "A room is deleted!, Current available rooms",
+					})
 				}
 
 			case events.JoinRoom:
