@@ -9,7 +9,7 @@ import { pushToLobby, updateRequests } from "#store/slices/lobby";
 
 export function GameLobbyGate() {
   const { socketStatus, inComingRequests, showMessages } = useSelector((state: RootState) => state.lobby);
-  const { status, round } = useSelector((state: RootState) => state.arena)
+  const { status, round} = useSelector((state: RootState) => state.arena)
   const dispatch = useDispatch();
   // Owner resolves  requestor's petition
   const handlePetitionAction = (id: string, actionType: 'resolved' | 'rejected') => {
@@ -31,7 +31,7 @@ export function GameLobbyGate() {
     return (
       <div className="h-fit">
         <Header messages={inComingRequests?.length}
-          arenaDetail={{ isIn: (status !== "idle"), name: 'arena', progress: progress }}
+          arenaDetail={{ isIn: (status !== "idle"), name:"", progress: progress }}
           onShowMsg={() => dispatch(changeShowMsgStatus(!showMessages))} />
         <div className="mb-24 px-xl p-fit flex flex-col items-start">
           <Outlet />

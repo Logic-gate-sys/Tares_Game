@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import type { RootState } from '#store/store';
@@ -12,7 +12,8 @@ import { PlayerStats } from '#components/player/stats';
 export function Arena() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { room, gameState, timer, round, message, scramble, scores, wordCounts, liveFeed } = useSelector((state: RootState) => state.arena);
+  const { room, gameState, timer, round, message, scramble,
+    scores, wordCounts, liveFeed, playersStats } = useSelector((state: RootState) => state.arena);
   const { user } = useSelector((state: RootState) => state.auth);
   const playerId = user?.id !== undefined ? String(user.id) : '';
   const playerScore = scores?.[playerId] ?? 0;
@@ -28,11 +29,15 @@ export function Arena() {
     document.body.className = "bg-surface text-deep-ink font-body-md overflow-x-hidden min-h-screen bg-grid";
   }, []);
 
+  const sortedPlayers = useMemo(
+    () => [...playersStats].sort((a, b) => a.cumlativeScore - b.cumlativeScore),
+    [playersStats]
+  );
   return (
     <>
       <main className="max-h-screen max-w-screen mx-fit px-margin-mobile md:px-margin-desktop py-4 md:py-4 relative">
         <div className="relative grid grid-cols-1 md:grid-cols-13 gap-6 items-start">
-          <LiveFeed feed={liveFeed} />
+          <LiveFeed feed={liveFeed} players={sortedPlayers} />
           <GameplayArena
             isOwner={room?.ownerId !== undefined && user?.id !== undefined && String(room.ownerId) === String(user.id)}
             status={gameState ?? 'WAITING'}
@@ -77,3 +82,6 @@ export function Arena() {
     </>
   );
 }
+
+
+

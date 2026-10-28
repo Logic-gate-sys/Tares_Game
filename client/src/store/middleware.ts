@@ -24,7 +24,6 @@ export const socketMiddleware = (): Middleware => {
         const res = JSON.parse(event.data) as ServerMessage;
         switch (res.type) {
           case 'in:lobby':
-            console.log("::::Event::: ", res.payload)
             if (res.payload.which === "available:rooms") {
               store.dispatch(setAvailableRooms(res.payload.data as Room[]))
               break;
@@ -68,10 +67,10 @@ export const socketMiddleware = (): Middleware => {
           
         // handling ingame events 
           case "in:game":
-            console.log("IN_GAME EVENT: ", res.payload)
             switch (res.payload.which) {
               // new client joined, add their details to live updates data
               case "room:new:client-joined":
+                console.log("CLIENT_JOIN EVENT: ", res.payload)
                 store.dispatch(addPlayer(res.payload.data));
                 break;
               
@@ -80,7 +79,7 @@ export const socketMiddleware = (): Middleware => {
                 store.dispatch(applyGameState({
                   gameState: res.payload.data.status,
                   timer: res.payload.data.timeLeft,
-                  round: { roundNo: res.payload.data.round },
+                  round: { roundNo: res.payload.data.round, totalRound: 5 },
                   scramble: res.payload.data.scrambledWord ?? "",
                   scores: res.payload.data.scores,
                   wordCounts: res.payload.data.wordCounts,

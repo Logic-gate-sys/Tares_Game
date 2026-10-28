@@ -33,9 +33,9 @@ export const gameSlice = createSlice({
   initialState: initGameState,
   reducers: {
     // set available players 
-    addPlayer: (state, action:PayloadAction<{ name: string, scramble?: string, cumlativeScore: number}>) => {
+    addPlayer: (state, action: PayloadAction<{ name: string, scramble?: string, cumlativeScore: number }>) => {
         if (!state.playersStats.some((player) => player.name === action.payload.name)) {
-          state.playersStats.push({ ...action.payload, scramble:'' })
+          state.playersStats.push({ ...action.payload, scramble:'', cumlativeScore:0})
         }
     },
   
