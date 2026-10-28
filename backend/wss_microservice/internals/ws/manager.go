@@ -36,7 +36,7 @@ type roomManager struct {
 	sync.RWMutex
 	grpcClient     *grpc.UserGRPCClient
 	rooms          map[string]*GameRoom // All available rooms online
-	lobbyClients   map[*client]bool       // all clients with no rooms yet
+	lobbyClients   map[*client]bool     // all clients with no rooms yet
 	roomStore      *store.PostGresRoomStore
 	pendingJoins   map[string]*pendingJoin
 	userServiceURL string
@@ -93,6 +93,45 @@ func (rm *roomManager) Run() {
 		// All lobby inbound incoming events are handled here: Room request cycle etc
 		case action := <-rm.lobbyInbound:
 			switch action.Action.Action {
+			//create/update/
+			case events.CreateRoom:
+				var payload struct {
+					Name string `json:"name"`
+				}
+				if err := json.Unmarshal(action.Action.Value, &payload); err != nil {
+					log.Printf("Failed unmarshall payload. Error: %v", err)
+					break
+				}
+				room, err := rm.roomStore.GetRoomByName(context.Background(), payload.Name)
+				if err != nil {
+					log.Println(err.Error())
+					break
+				}
+				// broadcast to all connected clients
+				for client := range rm.lobbyClients {
+					rm.broadCastLobbyEventToClientNB(client, events.LobbyStateBroadcast{
+						Which: events.NewRoom, Data: room, Message: "New Room created"})
+				}
+      // Room updates and notifications to all connected clients 
+			case events.UpdateRoom:
+				var payload struct {
+					Name string `json:"name"`
+				}
+				if err := json.Unmarshal(action.Action.Value, &payload); err != nil {
+					log.Printf("Failed unmarshall payload. Error: %v", err)
+					break
+				}
+				room, err := rm.roomStore.GetRoomByName(context.Background(), payload.Name)
+				if err != nil {
+					log.Println(err.Error())
+					break
+				}
+				// broadcast to all connected clients
+				for client := range rm.lobbyClients {
+					rm.broadCastLobbyEventToClientNB(client, events.LobbyStateBroadcast{
+						Which: events.UpdatedRoom, Data: room, Message: "New Room created"})
+				}
+
 			case events.JoinRoom:
 				var payload struct {
 					RoomId string `json:"roomId"`
@@ -126,7 +165,7 @@ func (rm *roomManager) Run() {
 					playerRoom.join <- action.Client
 					break
 				}
-        // When requester is not room owner, fetch user stats to send to room owner client 
+				// When requester is not room owner, fetch user stats to send to room owner client
 				stats, err := rm.grpcClient.GetUserStats(context.Background(), action.Client.UserId)
 				if err != nil {
 					log.Println("Failed to load requester stats:", err)
@@ -168,7 +207,7 @@ func (rm *roomManager) Run() {
 						break
 					}
 				}
-      // When a players join request is resolved/cancelled
+				// When a players join request is resolved/cancelled
 			case events.ResolveJoin:
 				var payload struct {
 					RequestID string `json:"requestId"`
@@ -211,10 +250,10 @@ func (rm *roomManager) Run() {
 	}
 }
 
-// This function joins a client to an active game-room. Client may be room owner. 
-// Make sure to only execute a room's Run function once. 
+// This function joins a client to an active game-room. Client may be room owner.
+// Make sure to only execute a room's Run function once.
 func (rm *roomManager) joinRoom(c *client, room store.RoomViewModel) (error, *GameRoom) {
-	//  When room is full or client already in room 
+	//  When room is full or client already in room
 	if room.Capacity > 0 && rm.rooms[room.ID] != nil && len(rm.rooms[room.ID].Clients) >= room.Capacity {
 		return fmt.Errorf("Can't join room, please try again later"), nil
 	}
@@ -249,7 +288,7 @@ func (rm *roomManager) joinRoom(c *client, room store.RoomViewModel) (error, *Ga
 		rm.rooms[room.ID] = playerRoom
 		go playerRoom.Run()
 	}
-	
+
 	c.room = playerRoom
 	rm.broadCastLobbyEventToClientNB(c, events.LobbyStateBroadcast{
 		Which: events.JoinResponse,
@@ -282,7 +321,7 @@ func (rm *roomManager) broadCastLobbyEventToClientNB(c *client, event events.Lob
 	}
 }
 
-// Upgrades http request into a websocket connection, join client to lobby and start the lobby run 
+// Upgrades http request into a websocket connection, join client to lobby and start the lobby run
 // and client's pump functions
 func (rm *roomManager) HandleWS(w http.ResponseWriter, r *http.Request) {
 	user := middleware.GetUser(r)

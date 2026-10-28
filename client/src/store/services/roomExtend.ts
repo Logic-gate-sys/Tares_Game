@@ -41,6 +41,7 @@ export const roomApi = baseApi.injectEndpoints({
         */
     })
   }),
+  
   overrideExisting: false
 })
 

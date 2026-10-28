@@ -207,8 +207,9 @@ export function Lobby() {
 
             <div className="flex flex-col gap-4">
               {availableRooms.map((arena, idx) => {
+                console.log("USER_ID: ", user?.id, "OWNER_ID", arena.ownerId)
                 return <div key={idx} onClick={() => setSelectedRoomId(arena.id)}>
-                  <RoomCard data={arena} isOwner={arena.ownerId === user?.id}
+                  <RoomCard data={arena} isOwner={arena.ownerId ==user?.id}
                     onJoin={(event) => handleRoomJoinRequest(event, arena.id)}
                     onEnterOwnRoom={(event) => handleEnterOwnRoom(event, arena.id)}
                     onOpenDelete={() => setOpenDelete(true)}

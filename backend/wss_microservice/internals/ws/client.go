@@ -148,6 +148,7 @@ func (c *client) readFromClientPump() {
 			if err := json.Unmarshal(msg.RawJson, &inlobbyMsg); err != nil {
 				c.socket.WriteJSON(map[string]string{"error": err.Error()})
 			}
+			fmt.Printf("Event arrive at lobby door: %v", inlobbyMsg)
 			// send to lobby
 			c.manager.lobbyInbound <- LobbyAction{Client: c, Action: inlobbyMsg}
 

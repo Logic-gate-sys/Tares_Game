@@ -26,8 +26,9 @@ export type Props = {
   onEnterOwnRoom?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
-export const RoomCard = ({ data, isOwner, onJoin, onEnterOwnRoom, onOpenSettings, onOpenDelete, onToggleStatus }: Props) => {
-
+export const RoomCard = ({ data, isOwner, onJoin, onEnterOwnRoom, onOpenSettings,
+  onOpenDelete, onToggleStatus }: Props) => {
+  console.log("ISOWNER: ", isOwner)
   return (
     <div className="bg-paper-white border-4 border-deep-ink p-6 neubrutalism-shadow-sm hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[6px_6px_0px_0px_rgba(18,23,33,1)] transition-all group">
       <div className="flex flex-wrap items-center justify-between gap-4">
