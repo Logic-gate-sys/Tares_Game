@@ -159,6 +159,7 @@ func (c *client) readFromClientPump() {
 				c.socket.WriteJSON(map[string]string{"error": err.Error()})
 				continue
 			}
+			fmt.Printf("FROM_CLIENT: %v", ingameMsg)
 			ingameMsg.User = &events.Player{Id: strconv.Itoa(int(c.UserId)), Username: c.name}
 			if c.room == nil {
 				c.socket.WriteJSON(map[string]string{"error": "You are not in a game room"})

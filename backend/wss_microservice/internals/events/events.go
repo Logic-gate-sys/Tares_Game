@@ -3,6 +3,7 @@ package events
 import (
 	"encoding/json"
 	"time"
+	_ "github.com/logic-gate-sys/wss_service/internals/word_engine"
 )
 
 type lobbyAction string
@@ -82,7 +83,7 @@ type GameStateData struct {
 	Status        Status         `json:"status"`
 	TimeLeft      int            `json:"timeLeft"`
 	ScrambledWord string         `json:"scrambledWord"`
-	Scores        map[string]int `json:"scores"`
+	Scores        any            `json:"scores"` // this should be Scores in game_engine 
 	WordCounts    map[string]int `json:"wordCounts"`
 }
 
