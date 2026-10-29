@@ -14,7 +14,7 @@ export type GameState = {
   timer?: number;// how much time transpired
   wordCounts?: Record<string, number>;
   // current words submitted by user and it's associated score 
-  liveFeed: { id: number, user: string, word: string, score: number }[];
+  liveFeed: { id?: number, user: string, word: string, score: number }[];
   message?: string;
 }
 // {roomId, round, scores, scrambleWord, status, timeLeft, wordCount, message, which }
@@ -22,6 +22,7 @@ export type GameState = {
 const initGameState: GameState = {
   status: "idle",
   playersStats: [],
+  activeUserStats: {score:0, rank:"unkown"},
   scramble: '',
   liveFeed: [],
   round: {roundNo:0, winner:"", totalRound:5}
@@ -47,7 +48,8 @@ export const gameSlice = createSlice({
     addLiveFeed: (state, action: PayloadAction<GameState["liveFeed"]>) => { 
       state.liveFeed = action.payload
     },
-    pushToGameRoom: (_state, _action: PayloadAction<ClientMessage>) => { }, // handles all clinet --> server messages sending
+    // handles all clinet --> server messages sending
+    pushToGameRoom: (_state, _action: PayloadAction<ClientMessage>) => { }, 
   }
 })
 

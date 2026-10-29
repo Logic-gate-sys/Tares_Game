@@ -134,19 +134,21 @@ func (g *Game) ScoreSubmission(playerID int, word string, diff engine.Difficulty
 	}
 
 	score, err := g.wordEngine.ScoreWord(word, diff)
-	if err != nil || score == 0 {
+	if err != nil || score == 0{
 		return score, err
 	}
+	// update usedwords 
 	g.ActiveRoom.UsedWords[word] = playerID
 	for i := range g.ActiveRoom.Scores{
 		if g.ActiveRoom.Scores[i].Id == int(playerID){
-			g.ActiveRoom.Scores[i].CumlativeScore +=score
+			g.ActiveRoom.Scores[i].CumlativeScore += score
 			break
 		}
 	}
 	g.ActiveRoom.WordCounts[playerID]++
 	return score, nil
 }
+
 
 func canBuildWord(word string, letters string) bool {
 	available := make(map[rune]int)
@@ -190,20 +192,18 @@ func (g *Game) GenerateStatsReport() events.GameStateBroadcast {
 	}
 }
 
-// TODO: Game engine must only be responsible for game: word generation, scoring word.
-// Fetches current game state data for a given room and return the results as event.GameStateData.
-func (g *Game) CurrentGameData(roomID string, round int, status events.Status, timeLeft int, re Reason) events.GameStateData {
+// CurrentGameData fetches current game state data for a given room and return 
+// the results as event.GameStateData.
+func (g *Game) CurrentGameData(roomID string, round int, status events.Status, timeLeft int) events.GameStateData {
 	g.mux.Lock()
 	defer g.mux.Unlock()
 
 	scores := make([]Score, len(g.ActiveRoom.Scores))
-	copy(scores, g.ActiveRoom.Scores)
-
+	_=copy(scores, g.ActiveRoom.Scores)
 	wordCounts := make(map[string]int, len(g.ActiveRoom.WordCounts))
 	for id, n := range g.ActiveRoom.WordCounts {
 		wordCounts[strconv.Itoa(id)] = n
 	}
-
 	return events.GameStateData{
 		RoomId:        roomID,
 		Round:         round,

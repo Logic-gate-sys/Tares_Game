@@ -26,8 +26,11 @@ export type ClientMessage =
   // in game messages
   | {
     type: 'in:game', payload:
-    | { action: 'START_GAME' | 'PAUSE_GAME' | 'RESUME_GAME' | 'RESTART_GAME' | 'LEAVE_GAME', value: { userId: number } }
-    | { action: 'SEND_WORD', value: { word: string } }
+    | {
+      action: 'START_GAME' | 'PAUSE_GAME' | 'RESUME_GAME' | 'RESTART_GAME' | 'LEAVE_GAME',
+      value: { userId: number }
+    }
+      | { action: 'SEND_WORD', value: { word: string } }
   }
 
 // Server --> Client Message format
@@ -43,19 +46,12 @@ export type ServerMessage =
   }
   | {
     type: 'in:game', payload:
-    | { which: 'room:new:client-joined', data: { id:number, name: string, cumlativeScore: 0 } }
+    | { which: 'room:new:client-joined', data: { id: number, name: string, cumlativeScore: 0 } }
     | { which: 'room:to:joined-client', data: GameStatePayload, message?: string }
-    | { which: 'room:client:left', data: { name: string, message: string } }
-    //next level
     | {
       which: 'room:word-submitted',
-      data: {
-        name: string;
-        word: string;
-        score: number;
-        state: GameStatePayload;
-      };
-      message?: string;
+      data: { id:number, name: string, word: string, score: number, state: GameStatePayload }, message?: string
     }
+    | { which: 'room:client:left', data: { name: string, message: string } }
     | { which: 'owner:starts:game', data: GameStatePayload, message?: string }
   }

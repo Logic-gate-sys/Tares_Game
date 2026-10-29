@@ -1,6 +1,6 @@
 export function PlayerStats({ score = 0, rank = 0, words = 0, totalWords = 0 }: {
   score?: number;
-  rank?: number;
+  rank?: number |string;
   words?: number;
   totalWords?: number;
 }) {

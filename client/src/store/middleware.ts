@@ -1,7 +1,7 @@
 import { type Middleware } from "@reduxjs/toolkit";
 import { addMessage, addRequest, addRoom, updateRoom, changeSocketStatus, lobbySlice, removeRoom, setAvailableRooms } from "./slices/lobby"
-import {applyGameState,gameSlice, addPlayer,addLiveFeed} from "./slices/arena";
-import type { ServerMessage} from "#types/messages";
+import { applyGameState, gameSlice, addPlayer, addLiveFeed } from "./slices/arena";
+import type { ServerMessage } from "#types/messages";
 import type { Room, Request } from "#types/entities";
 
 
@@ -23,13 +23,12 @@ export const socketMiddleware = (): Middleware => {
       socket.addEventListener("message", (event) => {
         const res = JSON.parse(event.data) as ServerMessage;
         switch (res.type) {
-          case 'in:lobby':
+          case 'in:lobby': {
             if (res.payload.which === "available:rooms") {
-              store.dispatch(setAvailableRooms(res.payload.data as Room[]))
+              store.dispatch(setAvailableRooms(res.payload.data as Room[]));
               break;
             }
             if (res.payload.which === "rooms:new") {
-              console.log("New Room created: ", res.payload.data)
               store.dispatch(addRoom(res.payload.data));
               break;
             }
@@ -38,7 +37,6 @@ export const socketMiddleware = (): Middleware => {
               store.dispatch(updateRoom({ updatedRoom: room }));
               break;
             }
-
             // when join request comes in
             if (res.payload.which === "incoming:join:request") {
               store.dispatch(addRequest(res.payload.data as Request));
@@ -64,9 +62,9 @@ export const socketMiddleware = (): Middleware => {
               break;
             }
             break;
-
+          };
           // handling ingame events
-          case "in:game":
+          case "in:game": {
             switch (res.payload.which) {
               case "room:new:client-joined":
                 store.dispatch(addPlayer(res.payload.data));
@@ -101,27 +99,20 @@ export const socketMiddleware = (): Middleware => {
               case "room:client:left":
                 break;
 
-              case "room:word-submitted":
-                store.dispatch(addLiveFeed({
-                  user: res.payload.data.name,
-                  word: res.payload.data.word,
-                  score: res.payload.data.score,
-                }));
-                if (res.payload.data.state) {
+              case "room:word-submitted": {
+                const { data, message } = res.payload;
+                console.log("WORD SUBMIT DATA: ", data)
+                store.dispatch(addLiveFeed({ ...data, user: data["name"] }));
+                if (data.state) {
                   store.dispatch(applyGameState({
-                    scores: res.payload.data.state.scores,
-                    wordCounts: res.payload.data.state.wordCounts,
+                    scores: data.state.scores,
+                    wordCounts: data.state.wordCounts,
                   }));
                 }
                 break;
-
-              default:
-                break;
+              }
             }
-            break;
-
-          default:
-            break;
+          };
         }
       });
       // closing socket
@@ -131,16 +122,16 @@ export const socketMiddleware = (): Middleware => {
     // outbound lobby messages
     if (lobbySlice.actions.pushToLobby.match(action)) {
       if (socket && socket.readyState === WebSocket.OPEN) {
-        console.log("Event:To:Server", action.payload)
         socket.send(JSON.stringify(action.payload))
       };
       //  in-game client messages
     } else if (gameSlice.actions.pushToGameRoom.match(action)) {
+      console.log("OUTBOUND in:game", action.payload, "readyState:", socket?.readyState);
       if (socket && socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify(action.payload))
       }
     };
-
+    
     return next(action);
   }
 }

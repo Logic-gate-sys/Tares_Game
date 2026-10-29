@@ -12,16 +12,12 @@ import { PlayerStats } from '#components/player/stats';
 export function Arena() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { room, gameState, timer, round, message, scramble, scores, wordCounts,
-    liveFeed, playersStats } = useSelector((state: RootState) => state.arena);
+  const { room, gameState, timer, round, message, scramble, wordCounts,
+    liveFeed, playersStats,activeUserStats } = useSelector((state: RootState) => state.arena);
   const { user } = useSelector((state: RootState) => state.auth);
   const playerId = user?.id !== undefined ? String(user.id) : '';
-  const playerScore = scores?.[playerId] ?? 0;
   const playerWords = wordCounts?.[playerId] ?? 0;
   const totalWords = Object.values(wordCounts ?? {}).reduce((total, count) => total + count, 0);
-  const rank = Object.values(scores ?? {})
-    .filter((score) => score > playerScore)
-    .length + 1;
 
   // Apply body classes on mount if not handled globally in index.html
   useEffect(() => {
@@ -73,14 +69,13 @@ export function Arena() {
               }));
               navigate('/game/lobby');
             }}
-            onSubmit={(word) => dispatch(pushToGameRoom({ type: 'in:game', payload: { action: 'SEND_WORD', value: { word } } }))}
+            onSubmit={(word) => dispatch(pushToGameRoom({
+              type: 'in:game', payload: { action: 'SEND_WORD', value: { word } }
+            }))}
           />
-          <PlayerStats score={playerScore} rank={playerScore > 0 ? rank : 0} words={playerWords} totalWords={totalWords} />
+          <PlayerStats score={activeUserStats.score??0} rank={activeUserStats.rank} words={playerWords} totalWords={totalWords} />
         </div>
       </main>
     </>
   );
 }
-
-
-
