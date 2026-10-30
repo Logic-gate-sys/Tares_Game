@@ -97,9 +97,9 @@ func (g *Game) StartRound() (string, error) {
 	if err != nil {
 		return "Error generate scramble", err
 	}
-
-	// g.CurrentWord = strings.ToLower(word)
-	g.ScrambledWord = strings.Join(letters, "")
+	joinedLetters := strings.Join(letters, "")
+	g.CurrentWord = joinedLetters
+	g.ScrambledWord = joinedLetters
 	g.ActiveRoom.UsedWords = make(map[string]int)
 	g.ActiveRoom.WordCounts = make(map[int]int)
 	return g.ScrambledWord, nil
@@ -124,15 +124,18 @@ func (g *Game) ScoreSubmission(playerID int, word string, diff engine.Difficulty
 
 	word = strings.ToLower(strings.TrimSpace(word))
 	if word == "" {
+		
 		return 0, nil
 	}
+	// if cannot build wors score 0
 	if !canBuildWord(word, g.CurrentWord) {
 		return 0, nil
 	}
+	// if already used , score 0
 	if _, used := g.ActiveRoom.UsedWords[word]; used {
 		return 0, nil
 	}
-
+	
 	score, err := g.wordEngine.ScoreWord(word, diff)
 	if err != nil || score == 0{
 		return score, err
@@ -149,14 +152,18 @@ func (g *Game) ScoreSubmission(playerID int, word string, diff engine.Difficulty
 	return score, nil
 }
 
-
+// canBuildWord: checks whether a player's submitted word can be legally built using
+//  only the available pool of scrambled letters for that round. 
+// It acts as a character-frequency validator (similar to Scrabble rules) 
 func canBuildWord(word string, letters string) bool {
 	available := make(map[rune]int)
+	// count charactor frequency
 	for _, letter := range strings.ToLower(letters) {
 		available[letter]++
 	}
+	// compare each letter in submited word against the letter frequency map
 	for _, letter := range word {
-		if available[letter] == 0 {
+		if available[letter]==0 {
 			return false
 		}
 		available[letter]--

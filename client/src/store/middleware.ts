@@ -100,8 +100,8 @@ export const socketMiddleware = (): Middleware => {
                 break;
 
               case "room:word-submitted": {
-                const { data, message } = res.payload;
-                console.log("WORD SUBMIT DATA: ", data)
+                const { data} = res.payload;
+                console.log("WORD SUBMIT RESPONSE: ", data)
                 store.dispatch(addLiveFeed({ ...data, user: data["name"] }));
                 if (data.state) {
                   store.dispatch(applyGameState({

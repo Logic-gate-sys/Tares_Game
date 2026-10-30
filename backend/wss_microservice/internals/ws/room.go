@@ -219,7 +219,6 @@ func (gr *GameRoom) Run() {
 					// extract word from action 
 					word, ok := action.Value["word"].(string)
 					if !ok {continue}
-					fmt.Printf("WORD RECEIVED: %s\n", word)
 					//increating order of difficulty peer round 
 					difficulty := engine.Easy
 					switch gr.round {
