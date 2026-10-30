@@ -18,8 +18,8 @@ export const LiveFeed = ({ feed, players}: { feed: FeedItem[], players:LivePlaye
             <p className="bg-paper-white p-sm border-2 border-deep-ink font-label-bold text-deep-ink">
               No words submitted yet
             </p>
-          ) : feed.map((item) => (
-            <div key={item.id} className="flex items-center gap-sm bg-paper-white p-sm border-2 border-deep-ink animate-bounce">
+          ) : feed.map((item, idx) => (
+            <div key={idx} className="flex items-center gap-sm bg-paper-white p-sm border-2 border-deep-ink animate-bounce">
               <span className="material-symbols-outlined text-action-red" style={{ fontVariationSettings: "'FILL' 1" }}>
                 bolt
               </span>
@@ -31,7 +31,6 @@ export const LiveFeed = ({ feed, players}: { feed: FeedItem[], players:LivePlaye
           ))}
         </div>
       </div>
-
       {/* -- live player stats -- */}
       <aside className="md:col-span-3 space-y-md">
         {/* Current Stats */}

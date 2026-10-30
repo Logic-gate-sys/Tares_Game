@@ -349,7 +349,9 @@ func (rm *roomManager) HandleWS(w http.ResponseWriter, r *http.Request) {
 		socket:               socket,
 		inLobbyToClientEvent: make(chan events.LobbyStateBroadcast, 10),
 		inGameToClientEvent:  make(chan events.GameStateBroadcast, 10),
+		errorToClient:        make(chan events.ErrorStateBroadcast, 10),
 		manager:              rm,
+		writeMux:             sync.Mutex{},
 	}
 	rm.runOnce.Do(func() { go rm.Run() })
 	rm.lobbyJoin <- client

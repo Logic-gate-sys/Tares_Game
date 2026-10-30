@@ -55,3 +55,4 @@ export type ServerMessage =
     | { which: 'room:client:left', data: { name: string, message: string } }
     | { which: 'owner:starts:game', data: GameStatePayload, message?: string }
   }
+  | {type:'error', payload:{error: unknown, message:string}}
