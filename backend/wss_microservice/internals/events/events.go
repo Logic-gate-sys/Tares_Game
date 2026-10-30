@@ -77,6 +77,11 @@ type GameStateBroadcast struct {
 	Message string `json:"message"`
 }
 
+type ErrorStateBroadcast struct{
+	Error  error `json:"error"`
+	Message  string `json:"message"`
+}
+
 type GameStateData struct {
 	RoomId        string         `json:"roomId"`
 	Round         int            `json:"round"`
@@ -104,6 +109,7 @@ type message string
 const (
 	Ingame  message = "in:game"
 	Inlobby message = "in:lobby"
+	Error   message ="error"
 )
 
 // any message from client or server is in this format

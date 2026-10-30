@@ -41,11 +41,9 @@ export function Arena() {
             message={message}
             scramble={scramble}
             onStart={() => {
-              if (user?.id === undefined) return;
               dispatch(pushToGameRoom({ type: 'in:game', payload: { action: 'START_GAME', value: { userId: user.id } } }));
             }}
             onPause={() => {
-              if (user?.id === undefined) return;
               dispatch(pushToGameRoom({
                 type: 'in:game',
                 payload: {
@@ -55,14 +53,12 @@ export function Arena() {
               }));
             }}
             onRestart={() => {
-              if (user?.id === undefined) return;
               dispatch(pushToGameRoom({
                 type: 'in:game',
                 payload: { action: 'RESTART_GAME', value: { userId: user.id } },
               }));
             }}
             onLeave={() => {
-              if (user?.id === undefined) return;
               dispatch(pushToGameRoom({
                 type: 'in:game',
                 payload: { action: 'LEAVE_GAME', value: { userId: user.id } },

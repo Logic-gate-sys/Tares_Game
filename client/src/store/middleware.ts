@@ -112,7 +112,12 @@ export const socketMiddleware = (): Middleware => {
                 break;
               }
             }
+            break;
           };
+
+          case "error":
+            console.log("Error: ", res.payload);
+            break;
         }
       });
       // closing socket

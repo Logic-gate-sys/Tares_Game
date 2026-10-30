@@ -218,8 +218,8 @@ func (gr *GameRoom) Run() {
 				if gr.status == events.Playing && action.User != nil {
 					// extract word from action 
 					word, ok := action.Value["word"].(string)
-					fmt.Printf("WORD RECEIVED: %s", word)
 					if !ok {continue}
+					fmt.Printf("WORD RECEIVED: %s\n", word)
 					//increating order of difficulty peer round 
 					difficulty := engine.Easy
 					switch gr.round {
@@ -239,10 +239,8 @@ func (gr *GameRoom) Run() {
 						log.Printf("Failed to score word in room %s: %v", gr.Room.Id, err)
 						continue
 					}
-					if score == 0 {
-						continue
-					}
-					// send score updates of to clients 
+					log.Printf("Score: %f\n", score)
+					// send score updates to room clients 
 					for client := range gr.Clients {
 						event := events.GameStateBroadcast{
 							Which: events.WordSubmitted,

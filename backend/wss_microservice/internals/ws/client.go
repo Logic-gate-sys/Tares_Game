@@ -2,14 +2,16 @@ package ws
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
+	"sync"
 	"sync/atomic"
 	"time"
+
 	"github.com/gorilla/websocket"
 	"github.com/logic-gate-sys/wss_service/internals/events"
 )
-
 
 type client struct {
 	name                 string // connect client's name
@@ -17,10 +19,12 @@ type client struct {
 	socket               *websocket.Conn // socket connection by which the client communicates over the network
 	inLobbyToClientEvent chan events.LobbyStateBroadcast
 	inGameToClientEvent  chan events.GameStateBroadcast //messages going from server to client
-	room                 *GameRoom // Active game room client is currently connected to. 
+	errorToClient        chan events.ErrorStateBroadcast
+	room                 *GameRoom // Active game room client is currently connected to.
 	manager              *roomManager
 	pingStartedAt        atomic.Int64
 	pingMilliseconds     atomic.Int64
+	writeMux             sync.Mutex
 }
 
 func (c *client) Ping() int {
@@ -35,6 +39,7 @@ func (c *client) writeToClientPump() {
 	defer ticker.Stop()
 	lobbyEvents := c.inLobbyToClientEvent
 	gameEvents := c.inGameToClientEvent
+	errorEvents := c.errorToClient
 
 	// sent all inbound events through socket
 	for {
@@ -97,8 +102,32 @@ func (c *client) writeToClientPump() {
 			// flush message to client
 			fmt.Printf("Lobby event sent to client: %s", c.name)
 			writer.Close()
-		}
 
+		// error event
+		case event, ok := <-errorEvents:
+			// if manager closed error to client channel
+			if !ok {
+				errorEvents = nil
+				continue
+			}
+			jsonEvnt, err := json.Marshal(&event)
+			if err != nil {
+				fmt.Println("failed to marshal json")
+				return
+			}
+			msg := events.RawMessage{MsgType: events.Error, RawJson: jsonEvnt}
+			writer, err := c.socket.NextWriter(websocket.TextMessage)
+			if err != nil {
+				fmt.Println("Writer failed, connect again later")
+				return
+			}
+			if err := json.NewEncoder(writer).Encode(&msg); err != nil {
+				fmt.Printf("Failed to send broadcast message to client: %v", err)
+				return
+			}
+			// close write to push data to client when done encoding
+			writer.Close()
+		}
 	}
 }
 
@@ -138,39 +167,55 @@ func (c *client) readFromClientPump() {
 		// generic envlope to decode into first
 		var msg events.RawMessage
 		if err := json.NewDecoder(reader).Decode(&msg); err != nil {
-			c.socket.WriteJSON(map[string]string{"error": "Invalid json data"})
-			continue
+			c.errorToClient <- events.ErrorStateBroadcast{
+				Message: "Invalid json format. Could not decode data",
+				Error:   err,
+			}
+			break
 		}
 		// switch
 		switch msg.MsgType {
 		case events.Inlobby:
 			var inlobbyMsg events.InlobbyUserAction
 			if err := json.Unmarshal(msg.RawJson, &inlobbyMsg); err != nil {
-				c.socket.WriteJSON(map[string]string{"error": err.Error()})
+				c.errorToClient <- events.ErrorStateBroadcast{
+					Message: "Invalid json format. Could not decode data",
+					Error:   err,
+				}
+				break
 			}
+			// send to
 			fmt.Printf("Event arrive at lobby door: %v", inlobbyMsg)
-			// send to lobby
 			c.manager.lobbyInbound <- LobbyAction{Client: c, Action: inlobbyMsg}
 
 		// in game messsage to should go to room inbound channel
 		case events.Ingame:
 			var ingameMsg events.IngameUserAction
 			if err := json.Unmarshal(msg.RawJson, &ingameMsg); err != nil {
-				c.socket.WriteJSON(map[string]string{"error": err.Error()})
-				continue
+				fmt.Printf("Failed to unmarshal ingame message: %v | RawJson: %s\n", err, string(msg.RawJson))
+				c.errorToClient <- events.ErrorStateBroadcast{
+					Message: "Failed to unmarshal ingame message",
+					Error:   err,
+				}
+				break
 			}
-			fmt.Printf("FROM_CLIENT: %v", ingameMsg)
+			fmt.Printf("Event arrive at game door: %+v\n", ingameMsg)
 			ingameMsg.User = &events.Player{Id: strconv.Itoa(int(c.UserId)), Username: c.name}
 			if c.room == nil {
-				c.socket.WriteJSON(map[string]string{"error": "You are not in a game room"})
-				continue
+				c.errorToClient <- events.ErrorStateBroadcast{
+					Message: "You are not in a game room",
+					Error:   errors.New("No room found for user"),
+				}
+				break
 			}
 			// put on ingame action
 			c.room.inboundEvents <- ingameMsg
 
 		default:
-			c.socket.WriteJSON(map[string]string{"error": "Invalid player action"})
+			c.errorToClient <- events.ErrorStateBroadcast{
+				Message: "Invalid player action",
+				Error:   errors.New("No match for action!"),
+			}
 		}
 	}
-
 }
