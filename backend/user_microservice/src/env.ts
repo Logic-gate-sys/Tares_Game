@@ -4,11 +4,9 @@ import { z } from 'zod';
 import { existsSync } from 'node:fs';
 
 
-
 const nodeEnv = process.env.NODE_ENV ?? 'development';
 const envFile = nodeEnv === 'development'? '.env':'.env.test'
 const envPath = path.resolve(process.cwd(), envFile);
-
 // Local runs load the file. In Docker it won't exist, and Compose has already set the variables.
 if (existsSync(envPath)) {
   const loaded = config({ path: envPath, quiet: true });

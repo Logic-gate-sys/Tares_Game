@@ -3,11 +3,13 @@ import { socketMiddleware } from "./middleware";
 import lobbyReducer from "./slices/lobby";
 import arenaReducer from './slices/arena'
 import { baseApi } from "./services/baseApi";
-import authReducer  from "./slices/auth";
+import authReducer from "./slices/auth";
+import statsSlice from './slices/stats'
 
 
 export const store = configureStore({
   reducer: {
+    stats: statsSlice,
     auth: authReducer,
     lobby: lobbyReducer,
     arena: arenaReducer,

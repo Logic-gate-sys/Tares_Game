@@ -12,7 +12,7 @@ import { PlayerStats } from '#components/player/stats';
 export function Arena() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { room, gameState, timer, round, message, scramble, wordCounts,
+  const { room, gameState, timer, round, scramble, wordCounts,
     liveFeed, playersStats,activeUserStats } = useSelector((state: RootState) => state.arena);
   const { user } = useSelector((state: RootState) => state.auth);
   const playerId = user?.id !== undefined ? String(user.id) : '';
@@ -38,7 +38,6 @@ export function Arena() {
             status={gameState ?? 'WAITING'}
             timeLeft={timer}
             round={round?.roundNo}
-            message={message}
             scramble={scramble}
             onStart={() => {
               dispatch(pushToGameRoom({ type: 'in:game', payload: { action: 'START_GAME', value: { userId: user.id } } }));

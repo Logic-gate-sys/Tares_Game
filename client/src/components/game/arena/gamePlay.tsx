@@ -14,7 +14,7 @@ interface GameplayArenaProps {
   onSubmit: (word: string) => void;
 }
 
-export const GameplayArena = ({ isOwner, status, timeLeft = 0, round = 0, message, scramble, onStart, onPause, onRestart, onLeave, onSubmit }: GameplayArenaProps) => {
+export const GameplayArena = ({ isOwner, status, timeLeft = 0, round = 0, scramble, onStart, onPause, onRestart, onLeave, onSubmit }: GameplayArenaProps) => {
   const [inputValue, setInputValue] = useState('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,7 +39,7 @@ export const GameplayArena = ({ isOwner, status, timeLeft = 0, round = 0, messag
           <div className="text-display-lg font-display-lg-mobile md:text-display-lg leading-none">
             {formatTime(timeLeft)}
           </div>
-          {message && <div className="text-xs font-bold">{message}</div>}
+          {/*{message && <div className="text-xs font-bold">{message}</div>}*/}
         </div>
 
         <div className="text-paper-white px-md py-md border-4 border-deep-ink neubrutal-shadow bg-green-800">

@@ -3,6 +3,7 @@ import authRoutes from '#routes/auth';
 import { docsMiddleware } from '#routes/docs';
 import { errorHandler } from '#middlewares/error-handler';
 import userRoutes from '#routes/users';
+import statRoutes from '#routes/stats'; 
 import cors from 'cors';
 import { env } from './env.ts';
 
@@ -23,6 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/docs', ...docsMiddleware);
+app.use('/api/v1/stats', statRoutes)
 // Catch-all route for undefined endpoints
 app.use((req, res) => {
   res.status(404).json({

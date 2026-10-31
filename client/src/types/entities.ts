@@ -63,3 +63,45 @@ export type RoomCreateType = {
   iconBgClass: string;
   iconTextColorClass: string;
 }
+
+
+export interface HallOfFameChampion {
+  name: string;
+  season: string;
+  winRate: string;
+  words: string;
+  cardBg: string;
+  hoverRotate: string;
+  badgeClass: string;
+  badgeIcon: string;
+  avatarBg: string;
+  seasonBg: string;
+  imageSrc: string;
+  imageAlt: string;
+}
+
+export interface GlobalRankingEntry {
+  rank: string;
+  name: string;
+  imageSrc: string | null;
+  imageAlt: string;
+  imageBg: string;
+  words: string;
+  winRate: string;
+  winRateBg: string;
+  isSpecial?: boolean;
+}
+
+export type PlayerRowProps = GlobalRankingEntry;
+
+export type HallOfFameResponse = {
+  error?: unknown;
+  message?: string;
+  champions?: HallOfFameChampion[];
+};
+
+export type GlobalStatsResponse = {
+  error?: unknown;
+  message?: string;
+  globalRanks?: GlobalRankingEntry[];
+}
