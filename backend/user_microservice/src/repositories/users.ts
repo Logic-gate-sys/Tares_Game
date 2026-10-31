@@ -63,14 +63,6 @@ export async function updateUser(userId: number,data: UpdateUserInput): Promise<
   return user;
 }
 
-// List all available users for leaderboard. Paged with limit and offset 
-export async function listUsers(limit: number, offset: number): Promise<StoredUser[]> {
-  return db.select().from(Users)
-    .orderBy(desc(Users.totalScore))
-    .limit(limit)
-    .offset(offset);
-}
-
 
 // Updates user's password in the database 
 export async function updatePassword(userId: number, password: string): Promise<StoredUser | undefined> {

@@ -1,7 +1,9 @@
 import { createToken } from '../../src/utils/crypto.ts';
 import { hashPassword } from '../../src/utils/crypto.ts';
-import { pool } from '../../src/config/database.ts';
+import { pool, db } from '../../src/config/database.ts';
+import { Seasons} from '../../src/db/schema.ts'
 import type { SignupData, } from '../../src/schemas/auth.ts'
+
 
 
 type TestUser = {
@@ -45,9 +47,28 @@ export async function createTestUser(overrides: Partial<SignupData> = {}): Promi
     username: user.username,
     rawPassword,
     token: createToken({
-      sub: String(user.id),
       email: user.email,
       username: user.username,
+      id: user.id
     }, 60 * 60),
   };
 }
+
+
+export async function seedSeason(opts: {
+  number: number;
+  closed: boolean;
+  championId?: number;
+  words?: number;
+  winRate?: number;
+}) {
+  await db.insert(Seasons).values({
+    number: opts.number,
+    startsAt: new Date('2026-01-01T00:00:00Z'),
+    endsAt: new Date('2026-03-31T23:59:59Z'),
+    closedAt: opts.closed ? new Date('2026-04-01T00:00:00Z') : null,
+    championId: opts.championId ?? null,
+    championWords: opts.words ?? null,
+    championWinRate: opts.winRate ?? null,
+  });
+};

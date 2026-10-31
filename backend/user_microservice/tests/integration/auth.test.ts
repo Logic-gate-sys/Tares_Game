@@ -129,6 +129,7 @@ describe("SIGNUP & LOGIN WORKFLOW", () => {
         .send({ email: email })
         .expect(200);
       expect(res.body).toHaveProperty("resetToken");
+      expect(res.body).toHaveProperty("message", )
       expect(res.body).toHaveProperty("link");
 
       // actual reset routes
@@ -136,7 +137,7 @@ describe("SIGNUP & LOGIN WORKFLOW", () => {
         .post("/api/v1/auth/reset-password")
         .send({ token: res.body.resetToken, password: "my-newPassword94092" })
         .expect(200)
-
+       console.log("RES: ", resetRes.body)
       expect(resetRes.body).toHaveProperty("message", 'Password reset successfully, you can login now' )
     })
   })

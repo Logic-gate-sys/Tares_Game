@@ -1,4 +1,7 @@
-import { pgTable, bytea, serial, varchar, text, integer,doublePrecision, timestamp } from 'drizzle-orm/pg-core';
+import {
+  pgTable, bytea, serial, varchar, text, integer, doublePrecision,
+  timestamp, pgEnum, uniqueIndex, index
+} from 'drizzle-orm/pg-core';
 
 //Users entity
 export const Users = pgTable('users', {
@@ -26,8 +29,44 @@ export const Tokens = pgTable('tokens', {
 });
 
 
+// :::::::::::::::::::::::::::: GLOBAL STATS ::::::::::::::::::::::::::::::::
+export const statPeriodEnum = pgEnum('stat_period', ['weekly', 'all_time']);
+// One row per season. Created when a season opens and filled in when it closes.
+// Champion fields are a snapshot, so the Hall of Fame stays fixed after the season ends.
+export const Seasons = pgTable('seasons', {
+  id: serial('id').primaryKey(),
+  number: integer('number').notNull().unique(),
+  startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
+  endsAt: timestamp('ends_at', { withTimezone: true }).notNull(),
+  closedAt: timestamp('closed_at', { withTimezone: true }),
+  championId: integer('champion_id').references(() => Users.id, { onDelete: 'set null' }),
+  championWinRate: doublePrecision('champion_win_rate'), // 0-100
+  championWords: integer('champion_words'),
+});
 
-// Schemas 
+// One row per user per period. Weekly rows use the start of that week (UTC Monday).
+// All-time rows use a fixed epoch so the unique key never contains NULL.
+export const PlayerStats = pgTable('player_stats', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => Users.id, { onDelete: 'cascade' }),
+  period: statPeriodEnum('period').notNull(),
+  periodStart: timestamp('period_start', { withTimezone: true }).notNull(),
+  wordsUnscrambled: integer('words_unscrambled').default(0).notNull(),
+  gamesPlayed: integer('games_played').default(0).notNull(),
+  gamesWon: integer('games_won').default(0).notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+},
+  (t) => [
+    uniqueIndex('player_stats_user_period_uq').on(t.userId, t.period, t.periodStart),
+    index('player_stats_leaderboard_idx').on(t.period, t.periodStart, t.wordsUnscrambled),
+  ]);
+
+export type Season = typeof Seasons.$inferSelect;
+export type NewSeason = typeof Seasons.$inferInsert;
+export type PlayerStat = typeof PlayerStats.$inferSelect;
+export type NewPlayerStat = typeof PlayerStats.$inferInsert;
+
+// Schemas
 export type Token = typeof Tokens.$inferSelect;
 export type NewToken = typeof Tokens.$inferInsert;
 

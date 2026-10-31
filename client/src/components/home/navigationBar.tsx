@@ -7,7 +7,6 @@ type Resource = {
 const resources: Resource[] = [
   { name: "Home", link: "/" },
   { name: "Heroes", link: "/global-stats" },
-  { name: "Archives", link: "/achives" }
 ]
 export function NavigationBar() {
   return (

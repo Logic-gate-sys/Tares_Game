@@ -1,5 +1,5 @@
 type FeedItem = {
-  id: number;
+  id?: number;
   user: string;
   word: string;
   score: number;
