@@ -193,6 +193,170 @@ func (x *PlayerStats) GetAccuracy() float64 {
 	return 0
 }
 
+type RecordCompletedMatchRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MatchId       string                 `protobuf:"bytes,1,opt,name=match_id,json=matchId,proto3" json:"match_id,omitempty"`
+	Players       []*MatchPlayerResult   `protobuf:"bytes,2,rep,name=players,proto3" json:"players,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecordCompletedMatchRequest) Reset() {
+	*x = RecordCompletedMatchRequest{}
+	mi := &file_user_v1_user_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecordCompletedMatchRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecordCompletedMatchRequest) ProtoMessage() {}
+
+func (x *RecordCompletedMatchRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecordCompletedMatchRequest.ProtoReflect.Descriptor instead.
+func (*RecordCompletedMatchRequest) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *RecordCompletedMatchRequest) GetMatchId() string {
+	if x != nil {
+		return x.MatchId
+	}
+	return ""
+}
+
+func (x *RecordCompletedMatchRequest) GetPlayers() []*MatchPlayerResult {
+	if x != nil {
+		return x.Players
+	}
+	return nil
+}
+
+type MatchPlayerResult struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	UserId           int32                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Score            int32                  `protobuf:"varint,2,opt,name=score,proto3" json:"score,omitempty"`
+	WordsUnscrambled int32                  `protobuf:"varint,3,opt,name=words_unscrambled,json=wordsUnscrambled,proto3" json:"words_unscrambled,omitempty"`
+	Won              bool                   `protobuf:"varint,4,opt,name=won,proto3" json:"won,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *MatchPlayerResult) Reset() {
+	*x = MatchPlayerResult{}
+	mi := &file_user_v1_user_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MatchPlayerResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MatchPlayerResult) ProtoMessage() {}
+
+func (x *MatchPlayerResult) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MatchPlayerResult.ProtoReflect.Descriptor instead.
+func (*MatchPlayerResult) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *MatchPlayerResult) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *MatchPlayerResult) GetScore() int32 {
+	if x != nil {
+		return x.Score
+	}
+	return 0
+}
+
+func (x *MatchPlayerResult) GetWordsUnscrambled() int32 {
+	if x != nil {
+		return x.WordsUnscrambled
+	}
+	return 0
+}
+
+func (x *MatchPlayerResult) GetWon() bool {
+	if x != nil {
+		return x.Won
+	}
+	return false
+}
+
+type RecordCompletedMatchResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Recorded      bool                   `protobuf:"varint,1,opt,name=recorded,proto3" json:"recorded,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecordCompletedMatchResponse) Reset() {
+	*x = RecordCompletedMatchResponse{}
+	mi := &file_user_v1_user_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecordCompletedMatchResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecordCompletedMatchResponse) ProtoMessage() {}
+
+func (x *RecordCompletedMatchResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecordCompletedMatchResponse.ProtoReflect.Descriptor instead.
+func (*RecordCompletedMatchResponse) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *RecordCompletedMatchResponse) GetRecorded() bool {
+	if x != nil {
+		return x.Recorded
+	}
+	return false
+}
+
 var File_user_v1_user_proto protoreflect.FileDescriptor
 
 const file_user_v1_user_proto_rawDesc = "" +
@@ -208,9 +372,20 @@ const file_user_v1_user_proto_rawDesc = "" +
 	"\x05stats\x18\x05 \x01(\v2\x14.user.v1.PlayerStatsR\x05stats\"=\n" +
 	"\vPlayerStats\x12\x12\n" +
 	"\x04wins\x18\x01 \x01(\x05R\x04wins\x12\x1a\n" +
-	"\baccuracy\x18\x02 \x01(\x01R\baccuracy2Z\n" +
+	"\baccuracy\x18\x02 \x01(\x01R\baccuracy\"n\n" +
+	"\x1bRecordCompletedMatchRequest\x12\x19\n" +
+	"\bmatch_id\x18\x01 \x01(\tR\amatchId\x124\n" +
+	"\aplayers\x18\x02 \x03(\v2\x1a.user.v1.MatchPlayerResultR\aplayers\"\x81\x01\n" +
+	"\x11MatchPlayerResult\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x05R\x06userId\x12\x14\n" +
+	"\x05score\x18\x02 \x01(\x05R\x05score\x12+\n" +
+	"\x11words_unscrambled\x18\x03 \x01(\x05R\x10wordsUnscrambled\x12\x10\n" +
+	"\x03won\x18\x04 \x01(\bR\x03won\":\n" +
+	"\x1cRecordCompletedMatchResponse\x12\x1a\n" +
+	"\brecorded\x18\x01 \x01(\bR\brecorded2\xbf\x01\n" +
 	"\vUserService\x12K\n" +
-	"\fGetUserStats\x12\x1c.user.v1.GetUserStatsRequest\x1a\x1d.user.v1.GetUserStatsResponseB:Z8github.com/logic-gate-sys/wss_service/pkg/user/v1;userpbb\x06proto3"
+	"\fGetUserStats\x12\x1c.user.v1.GetUserStatsRequest\x1a\x1d.user.v1.GetUserStatsResponse\x12c\n" +
+	"\x14RecordCompletedMatch\x12$.user.v1.RecordCompletedMatchRequest\x1a%.user.v1.RecordCompletedMatchResponseB:Z8github.com/logic-gate-sys/wss_service/pkg/user/v1;userpbb\x06proto3"
 
 var (
 	file_user_v1_user_proto_rawDescOnce sync.Once
@@ -224,21 +399,27 @@ func file_user_v1_user_proto_rawDescGZIP() []byte {
 	return file_user_v1_user_proto_rawDescData
 }
 
-var file_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_user_v1_user_proto_goTypes = []any{
-	(*GetUserStatsRequest)(nil),  // 0: user.v1.GetUserStatsRequest
-	(*GetUserStatsResponse)(nil), // 1: user.v1.GetUserStatsResponse
-	(*PlayerStats)(nil),          // 2: user.v1.PlayerStats
+	(*GetUserStatsRequest)(nil),          // 0: user.v1.GetUserStatsRequest
+	(*GetUserStatsResponse)(nil),         // 1: user.v1.GetUserStatsResponse
+	(*PlayerStats)(nil),                  // 2: user.v1.PlayerStats
+	(*RecordCompletedMatchRequest)(nil),  // 3: user.v1.RecordCompletedMatchRequest
+	(*MatchPlayerResult)(nil),            // 4: user.v1.MatchPlayerResult
+	(*RecordCompletedMatchResponse)(nil), // 5: user.v1.RecordCompletedMatchResponse
 }
 var file_user_v1_user_proto_depIdxs = []int32{
 	2, // 0: user.v1.GetUserStatsResponse.stats:type_name -> user.v1.PlayerStats
-	0, // 1: user.v1.UserService.GetUserStats:input_type -> user.v1.GetUserStatsRequest
-	1, // 2: user.v1.UserService.GetUserStats:output_type -> user.v1.GetUserStatsResponse
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	4, // 1: user.v1.RecordCompletedMatchRequest.players:type_name -> user.v1.MatchPlayerResult
+	0, // 2: user.v1.UserService.GetUserStats:input_type -> user.v1.GetUserStatsRequest
+	3, // 3: user.v1.UserService.RecordCompletedMatch:input_type -> user.v1.RecordCompletedMatchRequest
+	1, // 4: user.v1.UserService.GetUserStats:output_type -> user.v1.GetUserStatsResponse
+	5, // 5: user.v1.UserService.RecordCompletedMatch:output_type -> user.v1.RecordCompletedMatchResponse
+	4, // [4:6] is the sub-list for method output_type
+	2, // [2:4] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_user_v1_user_proto_init() }
@@ -252,7 +433,7 @@ func file_user_v1_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_user_v1_user_proto_rawDesc), len(file_user_v1_user_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

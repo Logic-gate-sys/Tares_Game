@@ -66,7 +66,7 @@ user_db_migrate:
 # gRPC
 proto-go:
 	@mkdir -p backend/wss_microservice/pkg/userpb
-	protoc --proto_path=proto \
+	protoc --proto_path=backend/proto \
 		--go_out=backend/wss_microservice/pkg/userpb --go_opt=paths=source_relative \
 		--go-grpc_out=backend/wss_microservice/pkg/userpb --go-grpc_opt=paths=source_relative \
-		proto/user/v1/user.proto
+		backend/proto/user/v1/user.proto

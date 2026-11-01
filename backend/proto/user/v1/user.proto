@@ -5,6 +5,7 @@ option go_package = "github.com/logic-gate-sys/wss_service/pkg/user/v1;userpb";
 
 service UserService {
   rpc GetUserStats(GetUserStatsRequest) returns (GetUserStatsResponse); 
+  rpc RecordCompletedMatch(RecordCompletedMatchRequest) returns (RecordCompletedMatchResponse);
 }
 
 message GetUserStatsRequest{
@@ -23,4 +24,20 @@ message GetUserStatsResponse {
 message PlayerStats {
   int32 wins = 1;
   double accuracy=2;
+}
+
+message RecordCompletedMatchRequest {
+  string match_id = 1;
+  repeated MatchPlayerResult players = 2;
+}
+
+message MatchPlayerResult {
+  int32 user_id = 1;
+  int32 score = 2;
+  int32 words_unscrambled = 3;
+  bool won = 4;
+}
+
+message RecordCompletedMatchResponse {
+  bool recorded = 1;
 }

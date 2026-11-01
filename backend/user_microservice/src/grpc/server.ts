@@ -1,5 +1,5 @@
 import * as grpc from '@grpc/grpc-js';
-import { getUserStats } from './userStats.ts';
+import { getUserStats, recordMatch } from './userStats.ts';
 import * as protoLoader from '@grpc/proto-loader';
 import path from 'node:path';
 
@@ -14,10 +14,10 @@ const packageDef = protoLoader.loadSync(PROTO_PATH, {
   defaults: true,
 })
 
-const proto = (grpc.loadPackageDefinition(packageDef)).user.v1;
+const proto = (grpc.loadPackageDefinition(packageDef) as unknown as any).user.v1;
 export function startGrpcServer(port: string): grpc.Server {
   const server = new grpc.Server();
-  server.addService(proto.UserService.service, { getUserStats });
+  server.addService(proto.UserService.service, { getUserStats, recordCompletedMatch: recordMatch });
 
   server.bindAsync(port, grpc.ServerCredentials.createInsecure(), (err, boundPort) => {
     if (err) {

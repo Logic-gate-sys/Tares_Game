@@ -295,6 +295,8 @@ func (rm *roomManager) joinRoom(c *client, room store.RoomViewModel) (error, *Ga
 			join:           make(chan *client),
 			leave:          make(chan *client),
 			gameEngine:     game_engine.NewGame(room.ID),
+			matchID:        uuid.NewString(),
+			userClient:     rm.grpcClient,
 			startGame:      make(chan bool),
 			stopGame:       make(chan bool),
 			pauseGame:      make(chan bool),

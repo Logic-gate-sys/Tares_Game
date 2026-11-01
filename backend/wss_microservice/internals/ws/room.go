@@ -1,16 +1,20 @@
 package ws
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/logic-gate-sys/wss_service/internals/events"
 	"github.com/logic-gate-sys/wss_service/internals/game_engine"
+	usergrpc "github.com/logic-gate-sys/wss_service/internals/grpc"
 	"github.com/logic-gate-sys/wss_service/internals/store"
 	"github.com/logic-gate-sys/wss_service/internals/timer"
 	engine "github.com/logic-gate-sys/wss_service/internals/word_engine"
+	pb "github.com/logic-gate-sys/wss_service/pkg/userpb/user/v1"
 )
 
 const (
@@ -18,8 +22,10 @@ const (
 	roundSeconds     = 60
 	totalRounds      = 3
 )
+
 type RoomOption func(*GameRoom)
 type Status string
+
 const (
 	Waiting  Status = "waiting"
 	Playing  Status = "playing"
@@ -33,19 +39,66 @@ type GameRoom struct {
 	inboundEvents  chan events.IngameUserAction
 	outBoundEvents chan events.GameStateBroadcast
 	scrambledWord  string // current scramble
-	wordCounts    map[string]int
-	join          chan *client
-	leave         chan *client
-	gameEngine    *game_engine.Game
-	startGame     chan bool
-	stopGame      chan bool
-	pauseGame     chan bool
+	wordCounts     map[string]int
+	join           chan *client
+	leave          chan *client
+	gameEngine     *game_engine.Game
+	startGame      chan bool
+	stopGame       chan bool
+	pauseGame      chan bool
 
 	status     events.Status
 	round      int
 	timeLeft   int
 	started    bool
 	pausedFrom events.Status
+	matchID    string
+	persisted  bool
+	userClient *usergrpc.UserGRPCClient
+}
+
+func (gr *GameRoom) persistCompletedMatch() {
+	if gr.persisted || gr.userClient == nil {
+		return
+	}
+
+	scores := gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft).Scores.([]game_engine.Score)
+	wordCounts := gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft).WordCounts
+	winnerID := 0
+	var winnerScore float32
+	for _, score := range scores {
+		if winnerID == 0 || score.CumlativeScore > winnerScore ||
+			(score.CumlativeScore == winnerScore && score.Id < winnerID) {
+			winnerID = score.Id
+			winnerScore = score.CumlativeScore
+		}
+	}
+
+	players := make([]*pb.MatchPlayerResult, 0, len(scores))
+	for _, score := range scores {
+		players = append(players, &pb.MatchPlayerResult{
+			UserId:           int32(score.Id),
+			Score:            int32(score.CumlativeScore),
+			WordsUnscrambled: int32(wordCounts[strconv.Itoa(score.Id)]),
+			Won:              score.Id == winnerID,
+		})
+	}
+	if len(players) == 0 {
+		log.Printf("Skipping completed match %s with no players", gr.matchID)
+		gr.persisted = true
+		return
+	}
+
+	request := &pb.RecordCompletedMatchRequest{MatchId: gr.matchID, Players: players}
+	for attempt := 1; attempt <= 3; attempt++ {
+		if _, err := gr.userClient.RecordCompletedMatch(context.Background(), request); err == nil {
+			gr.persisted = true
+			return
+		} else {
+			log.Printf("Failed to persist completed match %s (attempt %d/3): %v", gr.matchID, attempt, err)
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
 }
 
 // This runs the game logic. Integrated with game logic, scoring and ingame broadcasting capabilities,
@@ -62,10 +115,10 @@ func (gr *GameRoom) Run() {
 			if gr.status == "" {
 				gr.status = events.Waiting
 			}
-		// trigger game engine to account for this player
+			// trigger game engine to account for this player
 			gr.gameEngine.AddPlayer(int(c.UserId), c.name)
 			log.Printf("Client: %s joined Game-Room: %s", c.name, gr.Room.Name)
-			
+
 			gr.broadCastGameStateToClientNB(c, events.GameStateBroadcast{
 				Which:   events.ToJoinedClient,
 				Data:    gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft),
@@ -97,11 +150,11 @@ func (gr *GameRoom) Run() {
 			c.room = nil
 			log.Printf("Client left Game-Room: %s", gr.Room.Name)
 
-		// client interactions: sending events into game room 
+		// client interactions: sending events into game room
 		case action := <-gr.inboundEvents:
 			switch action.Action {
 			case events.StartGame:
-			// if starter is not owner, deny 
+				// if starter is not owner, deny
 				if action.User == nil || action.User.Id != strconv.Itoa(gr.Room.OwnerId) {
 					if action.User != nil {
 						for client := range gr.Clients {
@@ -117,7 +170,7 @@ func (gr *GameRoom) Run() {
 					}
 					break
 				}
-				// if game has already started, pass 
+				// if game has already started, pass
 				if gr.started {
 					for client := range gr.Clients {
 						if strconv.Itoa(int(client.UserId)) == action.User.Id {
@@ -131,7 +184,7 @@ func (gr *GameRoom) Run() {
 					}
 					break
 				}
-        // start game 
+				// start game
 				gr.started = true
 				gr.round = 1
 				gr.status = events.Countdown
@@ -142,7 +195,7 @@ func (gr *GameRoom) Run() {
 					gr.started = false
 					continue
 				}
-        // broadcast state to all connected clients
+				// broadcast state to all connected clients
 				for client := range gr.Clients {
 					event := events.GameStateBroadcast{
 						Which:   events.GameStarted,
@@ -178,6 +231,8 @@ func (gr *GameRoom) Run() {
 					continue
 				}
 				gr.gameEngine.Reset()
+				gr.matchID = uuid.NewString()
+				gr.persisted = false
 				gr.started = false
 				gr.round = 0
 				gr.timeLeft = 0
@@ -216,10 +271,12 @@ func (gr *GameRoom) Run() {
 
 			case events.SendWord:
 				if gr.status == events.Playing && action.User != nil {
-					// extract word from action 
+					// extract word from action
 					word, ok := action.Value["word"].(string)
-					if !ok {continue}
-					//increating order of difficulty peer round 
+					if !ok {
+						continue
+					}
+					//increating order of difficulty peer round
 					difficulty := engine.Easy
 					switch gr.round {
 					case 2:
@@ -227,9 +284,9 @@ func (gr *GameRoom) Run() {
 					case 3:
 						difficulty = engine.Hard
 					}
-					// retrieve user id from action 
+					// retrieve user id from action
 					id, err := strconv.Atoi(action.User.Id)
-					if err != nil{
+					if err != nil {
 						log.Printf("Failed to score word in room %s: %v", gr.Room.Id, err)
 						continue
 					}
@@ -239,20 +296,20 @@ func (gr *GameRoom) Run() {
 						continue
 					}
 					log.Printf("Score: %f\n", score)
-					// send score updates to room clients 
+					// send score updates to room clients
 					for client := range gr.Clients {
 						event := events.GameStateBroadcast{
 							Which: events.WordSubmitted,
-							Data: struct{ 
-								Id   string     `json:"id"`
-								Name string  `json:"name"`
+							Data: struct {
+								Id    string `json:"id"`
+								Name  string `json:"name"`
 								Word  string `json:"word"`
 								Score int    `json:"score"`
-								State  any   `json:"state"`
+								State any    `json:"state"`
 							}{
-								Id: action.User.Id, 
-								Name: action.User.Username,
-								Word: word,
+								Id:    action.User.Id,
+								Name:  action.User.Username,
+								Word:  word,
 								Score: int(score),
 								State: gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft),
 							},
@@ -260,17 +317,8 @@ func (gr *GameRoom) Run() {
 						}
 						gr.broadCastGameStateToClientNB(client, event)
 					}
-					// 
-					// for client := range gr.Clients {
-					// 	event := events.GameStateBroadcast{
-					// 		Which:   events.ToJoinedClient,
-					// 		Data:    gr.gameEngine.CurrentGameData(gr.Room.Id, gr.round, gr.status, gr.timeLeft),
-					// 		Message: "Word received",
-					// 	}
-					// 	gr.broadCastGameStateToClientNB(client, event)
-					// }
 				}
-				
+
 			case events.StopGame:
 				return
 			}
@@ -292,6 +340,7 @@ func (gr *GameRoom) Run() {
 				case events.Playing:
 					if gr.round == totalRounds {
 						gr.status = events.Finished
+						gr.persistCompletedMatch()
 
 					} else {
 						gr.status = events.RoundOver

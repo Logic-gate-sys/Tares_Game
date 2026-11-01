@@ -61,6 +61,18 @@ export const PlayerStats = pgTable('player_stats', {
     index('player_stats_leaderboard_idx').on(t.period, t.periodStart, t.wordsUnscrambled),
   ]);
 
+export const CompletedMatchResults = pgTable('completed_match_results', {
+  id: serial('id').primaryKey(),
+  matchId: varchar('match_id', { length: 128 }).notNull(),
+  userId: integer('user_id').notNull().references(() => Users.id, { onDelete: 'cascade' }),
+  score: integer('score').notNull(),
+  wordsUnscrambled: integer('words_unscrambled').notNull(),
+  won: integer('won').notNull(),
+  recordedAt: timestamp('recorded_at', { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex('completed_match_player_uq').on(t.matchId, t.userId),
+]);
+
 export type Season = typeof Seasons.$inferSelect;
 export type NewSeason = typeof Seasons.$inferInsert;
 export type PlayerStat = typeof PlayerStats.$inferSelect;

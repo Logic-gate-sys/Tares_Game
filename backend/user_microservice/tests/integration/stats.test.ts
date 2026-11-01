@@ -102,7 +102,7 @@ describe("Global Stats", () => {
         console.log("RESPONSE: ", res.body)
         // .expect(200);
 
-      const seasons = res.body.champions.map((c) => c.season);
+      const seasons = res.body.champions.map((c: any) => c.season);
       const idxNew = seasons.indexOf(203);
       const idxOld = seasons.indexOf(201);
 
@@ -123,7 +123,7 @@ describe("Global Stats", () => {
         .get("/api/v1/stats/global/champions")
         .expect(200);
 
-      const seasons = res.body.champions.map((c) => c.season);
+      const seasons = res.body.champions.map((c: any) => c.season);
       expect(seasons).not.toContain(202);
     });
   });

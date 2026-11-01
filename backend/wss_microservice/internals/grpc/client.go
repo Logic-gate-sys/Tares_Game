@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	pb "github.com/logic-gate-sys/wss_service/pkg/userpb/user/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-  pb "github.com/logic-gate-sys/wss_service/pkg/userpb/user/v1"
 )
 
 type UserGRPCClient struct {
@@ -26,8 +27,6 @@ func NewUserGRPCClient(targetAddr string) (*UserGRPCClient, error) {
 	}, nil
 }
 
-
-
 func (c *UserGRPCClient) GetUserStats(ctx context.Context, userID int32) (*pb.GetUserStatsResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
@@ -37,6 +36,13 @@ func (c *UserGRPCClient) GetUserStats(ctx context.Context, userID int32) (*pb.Ge
 	}
 
 	return c.client.GetUserStats(ctx, req)
+}
+
+func (c *UserGRPCClient) RecordCompletedMatch(ctx context.Context, req *pb.RecordCompletedMatchRequest) (*pb.RecordCompletedMatchResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	return c.client.RecordCompletedMatch(ctx, req)
 }
 
 func (c *UserGRPCClient) Close() error {

@@ -66,42 +66,34 @@ export type RoomCreateType = {
 
 
 export interface HallOfFameChampion {
+  id: number;
   name: string;
-  season: string;
-  winRate: string;
-  words: string;
-  cardBg: string;
-  hoverRotate: string;
-  badgeClass: string;
-  badgeIcon: string;
-  avatarBg: string;
-  seasonBg: string;
-  imageSrc: string;
-  imageAlt: string;
+  season: number;
+  winRate: number;
+  words: number;
+  avatarUrl: string;
+  avatarAlt: string;
 }
 
 export interface GlobalRankingEntry {
-  rank: string;
+  id: number;
+  rank: number;
   name: string;
-  imageSrc: string | null;
-  imageAlt: string;
-  imageBg: string;
-  words: string;
-  winRate: string;
-  winRateBg: string;
-  isSpecial?: boolean;
+  avatarUrl: string | null;
+  avatarAlt: string | null;
+  words: number;
+  winRate: number;
+  isCurrentUser: boolean;
 }
-
-export type PlayerRowProps = GlobalRankingEntry;
 
 export type HallOfFameResponse = {
   error?: unknown;
   message?: string;
-  champions?: HallOfFameChampion[];
+  champions: HallOfFameChampion[];
 };
 
 export type GlobalStatsResponse = {
   error?: unknown;
   message?: string;
-  globalRanks?: GlobalRankingEntry[];
+  globalRanks: GlobalRankingEntry[];
 }
