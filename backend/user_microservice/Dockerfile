@@ -6,7 +6,7 @@ COPY  backend/user_microservice/src ./src
 COPY  backend/user_microservice/openapi.yaml ./
 
 # copy proto files into app/proto 
-COPY proto   ./proto
+COPY backend/proto   ./proto
 COPY backend/user_microservice/drizzle ./drizzle
 
 EXPOSE 3000

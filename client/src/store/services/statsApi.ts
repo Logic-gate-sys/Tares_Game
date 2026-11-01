@@ -1,5 +1,5 @@
 import { baseApi } from "./baseApi";
-import type{ HallOfFameChampion, GlobalRankingEntry, GlobalStatsResponse, HallOfFameResponse } from "#types/entities";
+import type { GlobalStatsResponse, HallOfFameResponse } from "#types/entities";
 
 
 export type RankingPeriod = "weekly" | "all-time";

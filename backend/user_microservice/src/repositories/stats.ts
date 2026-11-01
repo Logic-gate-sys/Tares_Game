@@ -1,7 +1,7 @@
 // src/repositories/stats.repository.ts
 import { and, asc, desc, eq, isNotNull, sql } from 'drizzle-orm';
 import { db } from '#config/database';
-import { PlayerStats, Seasons, Users  } from '#db/schema';
+import { CompletedMatchResults, PlayerStats, Seasons, Users  } from '#db/schema';
 import { ALL_TIME_START, currentWeekStart } from '#utils/period';
 
 export type StatPeriod = 'weekly' | 'all_time';
@@ -87,5 +87,78 @@ export async function recordGameResult(input: {
           },
         });
     }
+
+  });
+}
+
+export async function recordCompletedMatch(input: {
+  matchId: string;
+  players: Array<{
+    userId: number;
+    score: number;
+    wordsUnscrambled: number;
+    won: boolean;
+  }>;
+}) {
+  if (!input.matchId || input.players.length === 0) {
+    throw new Error('A match ID and at least one player are required');
+  }
+
+  const periods: { period: StatPeriod; periodStart: Date }[] = [
+    { period: 'weekly', periodStart: currentWeekStart() },
+    { period: 'all_time', periodStart: ALL_TIME_START },
+  ];
+
+  return db.transaction(async (tx) => {
+    let recorded = false;
+    for (const player of input.players) {
+      const inserted = await tx
+        .insert(CompletedMatchResults)
+        .values({
+          matchId: input.matchId,
+          userId: player.userId,
+          score: player.score,
+          wordsUnscrambled: player.wordsUnscrambled,
+          won: player.won ? 1 : 0,
+        })
+        .onConflictDoNothing({
+          target: [CompletedMatchResults.matchId, CompletedMatchResults.userId],
+        })
+        .returning({ id: CompletedMatchResults.id });
+
+      if (inserted.length === 0) continue;
+      recorded = true;
+
+      await tx
+        .update(Users)
+        .set({
+          totalScore: sql`${Users.totalScore} + ${player.score}`,
+          wins: sql`${Users.wins} + ${player.won ? 1 : 0}`,
+        })
+        .where(eq(Users.id, player.userId));
+
+      for (const period of periods) {
+        await tx
+          .insert(PlayerStats)
+          .values({
+            userId: player.userId,
+            period: period.period,
+            periodStart: period.periodStart,
+            wordsUnscrambled: player.wordsUnscrambled,
+            gamesPlayed: 1,
+            gamesWon: player.won ? 1 : 0,
+          })
+          .onConflictDoUpdate({
+            target: [PlayerStats.userId, PlayerStats.period, PlayerStats.periodStart],
+            set: {
+              wordsUnscrambled: sql`${PlayerStats.wordsUnscrambled} + ${player.wordsUnscrambled}`,
+              gamesPlayed: sql`${PlayerStats.gamesPlayed} + 1`,
+              gamesWon: sql`${PlayerStats.gamesWon} + ${player.won ? 1 : 0}`,
+              updatedAt: new Date(),
+            },
+          });
+      }
+    }
+    return { recorded };
   });
 }

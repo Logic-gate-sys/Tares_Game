@@ -7,7 +7,7 @@ interface LeaderBoardState {
   status: 'loading' | 'error' | 'success' | 'idle';
   champions: HallOfFameChampion[];
   globalRanks: GlobalRankingEntry[];
-  message?: string;
+  message?: string | null;
   error?: unknown;
 }
 
