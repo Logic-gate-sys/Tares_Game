@@ -1,0 +1,4 @@
+admin_cidr           = "203.0.113.10/32"   # run: curl -s https://checkip.amazonaws.com
+frontend_bucket_name = "tares-frontend-prod-12345"
+api_domain           = "api.example.com"
+repo_url             = "https://github.com/you/Tares_Platform.git"

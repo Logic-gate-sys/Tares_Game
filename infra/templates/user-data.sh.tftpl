@@ -1,0 +1,22 @@
+#!/bin/bash
+set -eo pipefail
+export DEBIAN_FRONTEND=noninteractive
+
+# Swap for a small instance
+if [ ! -f /swapfile ]; then
+  fallocate -l 4G /swapfile
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  echo '/swapfile none swap sw 0 0' >> /etc/fstab
+fi
+
+apt-get update -y
+apt-get install -y docker.io docker-compose-v2 git certbot
+systemctl enable --now docker
+usermod -aG docker ubuntu
+
+if [ ! -d /opt/tares ]; then
+  git clone --branch "${repo_branch}" "${repo_url}" /opt/tares
+  chown -R ubuntu:ubuntu /opt/tares
+fi
