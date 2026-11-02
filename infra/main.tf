@@ -1,7 +1,7 @@
 provider "aws" {
   region = "us-west-2"
 }
-# query to aws cloud provider for information about other resources 
+# query to aws cloud provider for information about other resources
 data "aws_ami" "ubuntu" {
   most_recent = true
   filter {

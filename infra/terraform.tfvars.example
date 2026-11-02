@@ -1,4 +1,4 @@
-admin_cidr           = "41.79.97.5/32"   # run: curl -s https://checkip.amazonaws.com
-frontend_bucket_name = "tares-frontend-prod-12345"
-api_domain           = "api.example.com"
-repo_url             = "https://github.com/logic-gate-sys/Tares_Game.git"
+admin_cidr           = ""   # run: curl -s https://checkip.amazonaws.com
+frontend_bucket_name = ""
+api_domain           = ""
+repo_url             = ""
