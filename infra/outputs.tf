@@ -12,7 +12,8 @@ output "api_domain" {
 }
 
 output "ssh_command" {
-  value = "ssh -i ${var.private_key_path} ubuntu@${aws_eip.app.public_ip}"
+  sensitive = true
+  value     = "ssh -i ${var.private_key_path} ubuntu@${aws_eip.app.public_ip}"
 }
 
 output "frontend_bucket" {

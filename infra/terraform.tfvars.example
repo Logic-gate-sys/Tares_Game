@@ -1,4 +1,13 @@
+project_name         = "tares"
+environment          = "production"
+region               = "us-east-1"
 admin_cidr           = ""   # run: curl -s https://checkip.amazonaws.com
+public_key_path      = "~/.ssh/tares.pub"
 frontend_bucket_name = ""
-api_domain           = ""
-repo_url             = ""
+api_domain           = "api.example.com"
+
+# Non-secret values only. Use TF_VAR_bootstrap_environment in CI.
+bootstrap_environment = {
+  USER_SERVICE_IMAGE = ""
+  WSS_SERVICE_IMAGE  = ""
+}

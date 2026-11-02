@@ -26,8 +26,10 @@ cat > /etc/docker/daemon.json <<'EOF'
 EOF
 systemctl restart docker
 
-# Compose files and nginx config only
-if [ ! -d /opt/tares ]; then
-  git clone --branch "${repo_branch}" "${repo_url}" /opt/tares
-  chown -R ubuntu:ubuntu /opt/tares
-fi
+mkdir -p /opt/tares
+cat > /opt/tares/.env <<'ENVIRONMENT'
+%{ for key, value in bootstrap_environment ~}
+${key}=${value}
+%{ endfor ~}
+ENVIRONMENT
+chown ubuntu:ubuntu /opt/tares/.env

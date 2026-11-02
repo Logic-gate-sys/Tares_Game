@@ -3,6 +3,18 @@ variable "region" {
   default = "us-east-1"
 }
 
+variable "project_name" {
+  type        = string
+  description = "Name used in AWS resource names."
+  default     = "tares"
+}
+
+variable "environment" {
+  type        = string
+  description = "Deployment environment, such as staging or production."
+  default     = "production"
+}
+
 variable "admin_cidr" {
   type        = string
   description = "Your public IP in CIDR form, e.g. 203.0.113.10/32. The only address allowed to SSH."
@@ -44,9 +56,16 @@ variable "api_domain" {
 variable "repo_url" {
   type        = string
   description = "Git URL of the repo. Must be public for the clone in user-data."
+  default     = ""
 }
 
 variable "repo_branch" {
   type    = string
   default = "main"
+}
+
+variable "bootstrap_environment" {
+  type        = map(string)
+  description = "Non-secret environment values written to the instance .env file. Pass with TF_VAR_bootstrap_environment."
+  default     = {}
 }

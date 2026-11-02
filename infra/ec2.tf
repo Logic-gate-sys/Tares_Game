@@ -50,8 +50,7 @@ resource "aws_instance" "app" {
   vpc_security_group_ids = [aws_security_group.app.id]
 
   user_data = templatefile("${path.module}/templates/user-data.sh.tftpl", {
-    repo_url    = var.repo_url
-    repo_branch = var.repo_branch
+    bootstrap_environment = var.bootstrap_environment
   })
 
   root_block_device {
