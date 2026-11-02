@@ -4,6 +4,7 @@
 # Ignore all environment files by default. Keep templates and examples.
 **/.env
 **/.env.*
+**/.terraform.tfvars.*
 !**/.env.example
 !**/.env.template
 !**/.env.sample

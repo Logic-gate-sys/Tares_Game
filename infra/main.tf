@@ -1,53 +1,22 @@
-terraform {
-  required_version = ">= 1.15"
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-
-  # Create this bucket once before `terraform init` (see bootstrap notes below).
-  backend "s3" {
-    bucket       = "tares-terraform-state"
-    key          = "prod/terraform.tfstate"
-    region       = "us-east-1"
-    encrypt      = true
-    use_lockfile = true
-  }
-}
-
 provider "aws" {
-  region = var.region
-
-  default_tags {
-    tags = {
-      Project     = "tares"
-      Environment = "prod"
-    }
-  }
+  region = "us-west-2"
 }
-
-locals {
-  name = "tares"
-}
-
-data "aws_vpc" "default" {
-  default = true
-}
-
-# Latest Ubuntu 24.04 LTS (amd64) from Canonical's AWS account
+# query to aws cloud provider for information about other resources 
 data "aws_ami" "ubuntu" {
   most_recent = true
-  owners      = ["099720109477"]
-
   filter {
-    name   = "name"
+    name = "name"
     values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
   }
 
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
+  owners = ["099720109477"] # Canonical
+}
+
+resource "aws_instance" "app_server" {
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = "t3.small"
+
+  tags = {
+    Name = "terraform-provisioned"
   }
 }

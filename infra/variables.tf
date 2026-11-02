@@ -6,12 +6,23 @@ variable "region" {
 variable "admin_cidr" {
   type        = string
   description = "Your public IP in CIDR form, e.g. 203.0.113.10/32. The only address allowed to SSH."
+
+  validation {
+    condition     = can(cidrhost(var.admin_cidr, 0))
+    error_message = "admin_cidr must be a valid CIDR, such as 203.0.113.10/32."
+  }
 }
 
 variable "public_key_path" {
   type        = string
   default     = "~/.ssh/tares.pub"
-  description = "Public key for SSH access to the instance"
+  description = "Public key for SSH access"
+}
+
+variable "private_key_path" {
+  type        = string
+  default     = "~/.ssh/tares"
+  description = "Private key path, used only in the ssh_command output"
 }
 
 variable "instance_type" {
@@ -32,7 +43,7 @@ variable "api_domain" {
 
 variable "repo_url" {
   type        = string
-  description = "Git URL of the repo. Must be public for the clone in user-data; for a private repo, clone manually."
+  description = "Git URL of the repo. Must be public for the clone in user-data."
 }
 
 variable "repo_branch" {
