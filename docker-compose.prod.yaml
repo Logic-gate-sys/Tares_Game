@@ -1,0 +1,40 @@
+services:
+  user-db:
+    ports: []
+
+  game-db:
+    ports: []
+
+  redis:
+    ports: []
+
+  user-service:
+    build: null
+    image: ${USER_SERVICE_IMAGE:?USER_SERVICE_IMAGE is required}
+    env_file: []
+    ports: []
+    environment:
+      SERVER_PORT: 3000
+      DATABASE_URL: postgresql://${USER_DB_USER}:${USER_DB_PASSWORD}@user-db:5432/${USER_DB_NAME}
+      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CLOUDINARY_URL: ${CLOUDINARY_URL:-}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?ALLOWED_ORIGINS is required}
+
+  wss-service:
+    build: null
+    image: ${WSS_SERVICE_IMAGE:?WSS_SERVICE_IMAGE is required}
+    env_file: []
+    ports: []
+    environment:
+      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
+      USER_GRPC_ADDR: user-service:50051
+      DICTIONARY_FILEPATH: /app/game_words.txt
+      DATABASE_URL: postgres://${GAME_DB_USER}:${GAME_DB_PASSWORD}@game-db:5432/${GAME_DB_NAME}?sslmode=disable
+      WSS_PORT: 8081
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?ALLOWED_ORIGINS is required}
+    volumes:
+      - ./backend/wss_microservice/internals/dictionary/game_words.txt:/app/game_words.txt:ro
+
+  dev-gateway:
+    profiles: []

@@ -1,16 +1,9 @@
-name: Container deployment
+name: Build and deploy
 
 on:
   push:
     branches: [main, staging]
   workflow_dispatch:
-    inputs:
-      frontend_target:
-        description: Frontend deployment target
-        type: choice
-        options: [s3, netlify]
-        default: s3
-        required: true
 
 permissions:
   contents: read
@@ -35,25 +28,33 @@ jobs:
       tag: ${{ steps.meta.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - id: meta
+        name: Set image tag
         run: echo "tag=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
-      - uses: docker/build-push-action@v6
+
+      - name: Build and push user service
+        uses: docker/build-push-action@v6
         with:
           context: .
-          file: backend_platform/user_microservice/Dockerfile
+          file: backend/user_microservice/Dockerfile
           push: true
           tags: |
             ${{ env.IMAGE_NAMESPACE }}/tares-user-service:${{ steps.meta.outputs.tag }}
             ${{ env.IMAGE_NAMESPACE }}/tares-user-service:${{ github.ref_name }}
-      - uses: docker/build-push-action@v6
+
+      - name: Build and push WebSocket service
+        uses: docker/build-push-action@v6
         with:
-          context: backend_platform/wss_microservice
-          file: backend_platform/wss_microservice/Dockerfile
+          context: backend/wss_microservice
+          file: backend/wss_microservice/Dockerfile
           push: true
           tags: |
             ${{ env.IMAGE_NAMESPACE }}/tares-wss-service:${{ steps.meta.outputs.tag }}
@@ -65,26 +66,34 @@ jobs:
     environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
     steps:
       - uses: actions/checkout@v4
-      - name: Copy deployment files
+
+      - name: Prepare SSH
         env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-          EC2_USER: ${{ secrets.EC2_USERNAME }}
           EC2_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_HOST: ${{ secrets.EC2_HOST }}
         run: |
           install -m 700 -d ~/.ssh
           printf '%s\n' "$EC2_KEY" > ~/.ssh/tares_ec2
           chmod 600 ~/.ssh/tares_ec2
           ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
-          ssh -i ~/.ssh/tares_ec2 "$EC2_USER@$EC2_HOST" "mkdir -p ~/tares-platform"
-          scp -i ~/.ssh/tares_ec2 docker-compose.yaml docker-compose.prod.yaml nginx.dev.conf \
-            "$EC2_USER@$EC2_HOST:~/tares-platform/"
-      - name: Deploy containers
+
+      - name: Copy deployment files
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USER: ${{ secrets.EC2_USERNAME }}
-          EC2_KEY: ${{ secrets.EC2_SSH_KEY }}
-          GHCR_USER: ${{ github.actor }}
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ssh -i ~/.ssh/tares_ec2 "$EC2_USER@$EC2_HOST" "mkdir -p ~/tares-platform/backend/wss_microservice/internals/dictionary"
+          scp -i ~/.ssh/tares_ec2 \
+            docker-compose.yaml docker-compose.prod.yaml nginx.conf \
+            "$EC2_USER@$EC2_HOST:~/tares-platform/"
+          scp -i ~/.ssh/tares_ec2 \
+            backend/wss_microservice/internals/dictionary/game_words.txt \
+            "$EC2_USER@$EC2_HOST:~/tares-platform/backend/wss_microservice/internals/dictionary/"
+
+      - name: Create runtime environment
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USERNAME }}
           USER_DB_USER: ${{ secrets.USER_DB_USER }}
           USER_DB_PASSWORD: ${{ secrets.USER_DB_PASSWORD }}
           USER_DB_NAME: ${{ secrets.USER_DB_NAME }}
@@ -93,9 +102,9 @@ jobs:
           GAME_DB_NAME: ${{ secrets.GAME_DB_NAME }}
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
           CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
+          ALLOWED_ORIGINS: ${{ secrets.ALLOWED_ORIGINS }}
+          GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
         run: |
-          printf '%s\n' "$EC2_KEY" > ~/.ssh/tares_ec2
-          chmod 600 ~/.ssh/tares_ec2
           umask 077
           cat > .env.deploy <<EOF
           USER_SERVICE_IMAGE=${{ env.IMAGE_NAMESPACE }}/tares-user-service:${{ needs.publish-backend.outputs.tag }}
@@ -108,41 +117,19 @@ jobs:
           GAME_DB_NAME=$GAME_DB_NAME
           AUTH_SECRET=$AUTH_SECRET
           CLOUDINARY_URL=$CLOUDINARY_URL
+          ALLOWED_ORIGINS=$ALLOWED_ORIGINS
           EOF
           scp -i ~/.ssh/tares_ec2 .env.deploy "$EC2_USER@$EC2_HOST:~/tares-platform/.env"
+          printf '%s' "$GHCR_READ_TOKEN" | \
+            ssh -i ~/.ssh/tares_ec2 "$EC2_USER@$EC2_HOST" \
+            "docker login ghcr.io -u '${{ github.repository_owner }}' --password-stdin"
+
+      - name: Deploy immutable images
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USERNAME }}
+        run: |
           ssh -i ~/.ssh/tares_ec2 "$EC2_USER@$EC2_HOST" \
             "cd ~/tares-platform && \
-             echo '$GHCR_TOKEN' | docker login ghcr.io -u '$GHCR_USER' --password-stdin && \
-             docker compose -f docker-compose.yaml -f docker-compose.prod.yaml --profile prod pull && \
-             docker compose -f docker-compose.yaml -f docker-compose.prod.yaml --profile prod up -d --remove-orphans"
-
-  deploy-frontend:
-    needs: checks
-    runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: web-client/package-lock.json
-      - working-directory: web-client
-        run: npm ci
-      - working-directory: web-client
-        run: npx vite build
-      - name: Publish frontend to S3
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.frontend_target == 's3' }}
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-      - if: ${{ github.event_name != 'workflow_dispatch' || inputs.frontend_target == 's3' }}
-        run: aws s3 sync web-client/dist "s3://${{ secrets.S3_BUCKET }}" --delete
-      - if: ${{ github.event_name == 'workflow_dispatch' && inputs.frontend_target == 'netlify' }}
-        uses: netlify/actions/cli@v2
-        with:
-          args: deploy --dir=web-client/dist --prod --site=${{ secrets.NETLIFY_SITE_ID }}
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+             docker compose --env-file .env -f docker-compose.yaml -f docker-compose.prod.yaml --profile prod pull && \
+             docker compose --env-file .env -f docker-compose.yaml -f docker-compose.prod.yaml --profile prod up -d --remove-orphans"

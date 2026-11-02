@@ -8,6 +8,16 @@
 !**/.env.template
 !**/.env.sample
 
+# Terraform: secrets, state, and local artifacts
+**/terraform.tfvars
+**/*.auto.tfvars
+**/*.tfstate
+**/*.tfstate.backup
+**/*.tfplan
+**/.terraform/
+**/crash.log
+
+
 # ---------------------------------------------------------------------------
 # Node.js / TypeScript services and web client
 # ---------------------------------------------------------------------------
