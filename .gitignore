@@ -4,10 +4,19 @@
 # Ignore all environment files by default. Keep templates and examples.
 **/.env
 **/.env.*
-**/.terraform.tfvars.*
 !**/.env.example
 !**/.env.template
 !**/.env.sample
+
+# Terraform: secrets, state, and local artifacts
+**/terraform.tfvars
+**/*.auto.tfvars
+**/*.tfstate
+**/*.tfstate.backup
+**/*.tfplan
+**/.terraform/
+**/crash.log
+
 
 # ---------------------------------------------------------------------------
 # Node.js / TypeScript services and web client
