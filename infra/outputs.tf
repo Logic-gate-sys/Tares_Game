@@ -3,13 +3,10 @@ output "instance_id" {
 }
 
 output "api_ip" {
-  description = "Create an A record for api_domain pointing to this address"
+  description = "Public Elastic IP for the API and gateway"
   value       = aws_eip.app.public_ip
 }
 
-output "api_domain" {
-  value = var.api_domain
-}
 
 output "ssh_command" {
   sensitive = true
