@@ -48,11 +48,6 @@ variable "frontend_bucket_name" {
   description = "Globally unique S3 bucket name for the frontend"
 }
 
-variable "api_domain" {
-  type        = string
-  description = "API hostname, e.g. api.example.com. Create the A record in your DNS provider."
-}
-
 variable "repo_url" {
   type        = string
   description = "Git URL of the repo. Must be public for the clone in user-data."
