@@ -21,3 +21,9 @@ output "frontend_url" {
   description = "Frontend URL (HTTP only, since S3 website hosting has no TLS)"
   value       = "http://${aws_s3_bucket_website_configuration.frontend.website_endpoint}"
 }
+
+# api_ip = "13.62.121.173"
+# frontend_bucket = "tares-frontend-prod-12345"
+# frontend_url = "http://tares-frontend-prod-12345.s3-website.eu-north-1.amazonaws.com"
+# instance_id = "i-0e1f42bd2f9501ba5"
+# ssh_command = <sensitive>

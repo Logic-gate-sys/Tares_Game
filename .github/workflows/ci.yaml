@@ -1,51 +1,58 @@
 name: CI
 
 on:
-  workflow_call:
+  workflow_call:      # called by deploy.yml
   pull_request:
     branches: [main]
-  push:
-    branches: [main]
   workflow_dispatch:
+  # No push trigger: deploy.yml calls this workflow on main, so it would run twice otherwise.
 
+# Cancel superseded runs on pull requests only. Never cancel a run on main,
+# because deploy.yml reuses this workflow and a cancelled run could be mid-deploy.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
 
 jobs:
   frontend:
-    name: Frontend checks
+    name: Frontend tests
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: web-client
+        working-directory: client
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: web-client/package-lock.json
+          cache-dependency-path: client/package-lock.json
       - run: npm ci
       - run: npm test -- --run
-      - run: npx vite build
+
+  frontend-build:
+    name: Frontend build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/build-client   # uploads the "dist" artifact
 
   user-service:
     name: User service checks
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backend_platform/user_microservice
+        working-directory: backend/user_microservice
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: backend_platform/user_microservice/package-lock.json
+          cache-dependency-path: backend/user_microservice/package-lock.json
       - run: npm ci
       - run: npm run typecheck
       - run: npm test -- --run
@@ -55,22 +62,24 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backend_platform/wss_microservice
+        working-directory: backend/wss_microservice
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: "1.26"
-          cache-dependency-path: backend_platform/wss_microservice/go.sum
+          cache-dependency-path: backend/wss_microservice/go.sum
       - run: go test ./...
       - run: go test -race ./...
       - run: go build ./...
 
   docker:
-    name: Validate backend images
+    name: Build docker backend images
     needs: [user-service, wss-service]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -f backend_platform/user_microservice/Dockerfile -t tares-user-service:test .
-      - run: docker build -f backend_platform/wss_microservice/Dockerfile -t tares-wss-service:test backend_platform/wss_microservice
+      - uses: ./.github/actions/build-backend
+        with:
+          registry: tares-local   # local-only name, nothing is pushed
+          tag: ci

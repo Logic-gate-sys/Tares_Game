@@ -1,0 +1,43 @@
+name: Build backend containers
+description: Builds the user and WSS microservice images. Loads them locally, or pushes them when push is "true".
+
+inputs:
+  registry:
+    description: Image registry prefix, e.g. 400423455784.dkr.ecr.eu-north-1.amazonaws.com
+    required: true
+  tag:
+    description: Image tag
+    default: ci
+  push:
+    description: true to push to the registry instead of loading locally
+    default: "false"
+  platform:
+    description: Target platform. Must match the EC2 instance architecture.
+    default: linux/amd64
+
+runs:
+  using: composite
+  steps:
+    - uses: docker/setup-buildx-action@v3
+      
+    - uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: backend/user_microservice/Dockerfile
+        platforms: ${{ inputs.platform }}
+        tags: ${{ inputs.registry }}/tares-user-service:${{ inputs.tag }}
+        push: ${{ inputs.push == 'true' }}
+        load: ${{ inputs.push != 'true' }}
+        cache-from: type=gha,scope=user
+        cache-to: type=gha,mode=max,scope=user
+
+    - uses: docker/build-push-action@v6
+      with:
+        context: backend/wss_microservice
+        file: backend/wss_microservice/Dockerfile
+        platforms: ${{ inputs.platform }}
+        tags: ${{ inputs.registry }}/tares-wss-service:${{ inputs.tag }}
+        push: ${{ inputs.push == 'true' }}
+        load: ${{ inputs.push != 'true' }}
+        cache-from: type=gha,scope=wss
+        cache-to: type=gha,mode=max,scope=wss
