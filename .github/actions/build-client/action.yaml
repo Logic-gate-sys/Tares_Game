@@ -1,20 +1,21 @@
-name: Build Client
-description: Installs dependencies and build the static react app 
+name: Build client
+description: Builds the frontend into client/dist and uploads it as the "dist" artifact.
 
-# composite reusable action
 runs:
-    using: composite
-    steps:
-      - uses: actions/setup-node@v4
-        with: 
-          node-version: 24.22
-      - run: npm ci 
-        shell: bash 
-        working-directory: web-client
-      - run: npx vite build
-        shell: bash 
-        working-directory: web-client
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: web-client/dist/
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 24
+        cache: npm
+        cache-dependency-path: client/package-lock.json
+    - run: npm ci
+      shell: bash
+      working-directory: client
+    - run: npx vite build
+      shell: bash
+      working-directory: client
+    - uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: client/dist/
