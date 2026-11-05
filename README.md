@@ -179,6 +179,7 @@ sequenceDiagram
   
 ## Contributing 
   A stable version of this app needs to be released before any contributions will be accepted. If this projects interests you and you think you can make use of it or even add some cool new features always consider to DM or email.
+ 
 
 ## Known Issues 
   - No Merch features in current version 
