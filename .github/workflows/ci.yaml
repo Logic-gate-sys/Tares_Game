@@ -38,7 +38,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/build-client   # uploads the "dist" artifact
+      - uses: ./.github/actions/build-client
+        with:
+          api-url: ${{ vars.API_BASE_URL }}
 
   user-service:
     name: User service checks
@@ -79,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/build-backend
+      - uses: ./.github/actions/build_backend
         with:
           registry: tares-local   # local-only name, nothing is pushed
           tag: ci

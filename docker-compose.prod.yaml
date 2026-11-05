@@ -1,26 +1,39 @@
 services:
   user-db:
-    ports: []
+    ports: !reset []
     restart: unless-stopped
   game-db:
-    ports: []
+    ports: !reset []
     restart: unless-stopped
   redis:
-    ports: []
+    ports: !reset []
     restart: unless-stopped
   user-service:
-    ports: []
+    image: ${USER_SERVICE_IMAGE:?USER_SERVICE_IMAGE is required}
+    build: !reset null
+    env_file: !reset []
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${USER_DB_USER}:${USER_DB_PASSWORD}@user-db:5432/${USER_DB_NAME}
+      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?ALLOWED_ORIGINS is required}
+    ports: !reset []
     restart: unless-stopped
   wss-service:
-    ports: []
+    image: ${WSS_SERVICE_IMAGE:?WSS_SERVICE_IMAGE is required}
+    build: !reset null
+    env_file: !reset []
+    environment:
+      DATABASE_URL: postgresql://${GAME_DB_USER}:${GAME_DB_PASSWORD}@game-db:5432/${GAME_DB_NAME}?sslmode=disable
+      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?ALLOWED_ORIGINS is required}
+    ports: !reset []
     restart: unless-stopped
   nginx:
     image: nginx:1.29-alpine
-    ports: ["80:80", "443:443"]
+    ports: ["80:80"]
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-      - /var/www/certbot:/var/www/certbot:ro
     depends_on: [user-service, wss-service]
     restart: unless-stopped
     profiles: ["prod"]

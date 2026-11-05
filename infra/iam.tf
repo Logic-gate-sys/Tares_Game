@@ -13,15 +13,10 @@ resource "aws_iam_role" "app" {
   assume_role_policy = data.aws_iam_policy_document.ec2_assume.json
 }
 
-# SSM for remote commands, ECR for pulling images
+# SSM for remote commands
 resource "aws_iam_role_policy_attachment" "ssm" {
   role       = aws_iam_role.app.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-}
-
-resource "aws_iam_role_policy_attachment" "ecr_read" {
-  role       = aws_iam_role.app.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
 data "aws_iam_policy_document" "db_backup" {
