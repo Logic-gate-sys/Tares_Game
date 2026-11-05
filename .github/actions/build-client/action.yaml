@@ -14,7 +14,7 @@ runs:
         node-version: 24
         cache: npm
         cache-dependency-path: client/package-lock.json
-    - run: npm ci
+    - run: npm ci --legacy-peer-deps
       shell: bash
       working-directory: client
     - run: test -n "$VITE_BASE_URL"
