@@ -12,6 +12,7 @@ locals {
 data "aws_vpc" "default" {
   default = true
 }
+data "aws_caller_identity" "current" {}
 
 # amazon machine image to use for ec2
 data "aws_ami" "ubuntu" {

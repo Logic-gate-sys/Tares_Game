@@ -48,10 +48,11 @@ resource "aws_instance" "app" {
   instance_type          = var.instance_type
   key_name               = aws_key_pair.admin.key_name
   vpc_security_group_ids = [aws_security_group.app.id]
-
+ 
   user_data = templatefile("${path.module}/templates/user-data.sh.tftpl", {
     bootstrap_environment = var.bootstrap_environment
   })
+
 
   root_block_device {
     volume_size = 30 # Holds the Postgres data. 30 GB is the free-tier EBS limit.
@@ -76,3 +77,4 @@ resource "aws_eip" "app" {
 
   tags = { Name = "${local.name}-app" }
 }
+

@@ -61,8 +61,8 @@ services:
 
   user-service:
     build:
-      context: . # Because proto lives outside user service, context needs to account of that
-      dockerfile: backend/user_microservice/Dockerfile
+      context: backend # Because proto lives outside user service, context needs to account of that
+      dockerfile: user_microservice/Dockerfile
     env_file:
       ./backend/user_microservice/.env
     environment:
@@ -85,7 +85,7 @@ services:
       ./backend/wss_microservice/.env
     #Override environment variables
     environment:
-      DATABASE_URL: postgresql://tares_game:tares_game_dev_password@game-db:5432/tares_game?sslmode=disable
+      DATABASE_URL: postgresql://${GAME_DB_USER}:${GAME_DB_PASSWORD:?required}@game-db:5432/${GAME_DB_NAME}?sslmode=disable
     depends_on:
       game-db:
         condition: service_healthy
