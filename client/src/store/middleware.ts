@@ -14,7 +14,7 @@ export const socketMiddleware = (): Middleware => {
       // close existing socket
       if (socket) socket.close();
       store.dispatch(changeSocketStatus("connecting"));
-      socket = new WebSocket(action.payload.url);
+      socket = new WebSocket(action.payload?.url ?? "");
       socket.addEventListener("error", () => store.dispatch(changeSocketStatus('error')));
 
       if (!socket) return;
@@ -89,7 +89,7 @@ export const socketMiddleware = (): Middleware => {
                   timer: res.payload.data.timeLeft,
                   round: { roundNo: res.payload.data.round },
                   scramble: res.payload.data.scrambledWord ?? "",
-                  scores: res.payload.data.scores,
+                  playersStats: res.payload.data.scores,
                   wordCounts: res.payload.data.wordCounts,
                   message: res.payload.message,
                 }));
@@ -105,7 +105,7 @@ export const socketMiddleware = (): Middleware => {
                 store.dispatch(addLiveFeed({ ...data, user: data["name"] }));
                 if (data.state) {
                   store.dispatch(applyGameState({
-                    scores: data.state.scores,
+                    playersStats: data.state.scores,
                     wordCounts: data.state.wordCounts,
                   }));
                 }

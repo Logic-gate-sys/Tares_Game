@@ -1,7 +1,11 @@
 
+type DeleteModalProps = {
+  onClose: () => void;
+  onConfirm?: () => void;
+  title?: string;
+};
 
-
-export const DeleteModal = ({ onClose, onConfirm, title="ARENA" }) => {
+export const DeleteModal = ({ onClose, onConfirm, title = "ARENA" }: DeleteModalProps) => {
 
   return (
     <div className="fixed inset-0 z-100 bg-deep-ink/80  backdrop-blur-sm flex items-center justify-center p-2">
@@ -39,5 +43,4 @@ export const DeleteModal = ({ onClose, onConfirm, title="ARENA" }) => {
     </div>
   );
 }
-
 

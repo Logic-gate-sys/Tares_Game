@@ -1,5 +1,5 @@
 import type { Room } from '#types/entities';
-import { useState } from 'react';
+import { type FormEvent, useState } from 'react';
 
 
 const SYMBOLS = ['sports_esports', 'terminal', 'bolt', 'casino'];
@@ -10,13 +10,13 @@ type SettingProps = {
 };
 
 export const SettingsModal = ({ onClose, room, onSave }: SettingProps) => {
-  const [arenaName, setArenaName] = useState(room.name);
-  const [isOnline, setIsOnline] = useState<boolean>(room.status === "online");
-  const [capacity, setCapacity] = useState(room.capacity);
-  const [selectedSymbol, setSelectedSymbol] = useState(room.icon);
+  const [arenaName, setArenaName] = useState(room?.name ?? '');
+  const [isOnline, setIsOnline] = useState<boolean>(room?.status === "online");
+  const [capacity, setCapacity] = useState(room?.capacity ?? 2);
+  const [selectedSymbol, setSelectedSymbol] = useState(room?.icon ?? SYMBOLS[0]);
   
   
-  const handleSave = async(e) => {
+  const handleSave = (e: FormEvent<HTMLButtonElement>) => {
     e.preventDefault();
     if (!arenaName || !capacity) return;
     const data: Partial<Room> = {
@@ -27,7 +27,7 @@ export const SettingsModal = ({ onClose, room, onSave }: SettingProps) => {
       status: isOnline ? "online" : "offline"
     }
 
-    onSave(data)
+    onSave?.(data)
   };
   
   return (

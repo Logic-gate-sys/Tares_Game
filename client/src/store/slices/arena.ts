@@ -1,5 +1,5 @@
 import type { Room } from "#types/entities";
-import type { ClientMessage, GameStatePayload } from "#types/messages";
+import type { ClientMessage } from "#types/messages";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 
@@ -13,6 +13,7 @@ export type GameState = {
   round?: { roundNo?: number, winner?: string, totalRound?:number, scramble?:string};
   timer?: number;// how much time transpired
   wordCounts?: Record<string, number>;
+  message?: string;
   // current words submitted by user and it's associated score 
   liveFeed: { id?: number, user: string, word: string, score: number}[];
 }
@@ -40,7 +41,7 @@ export const gameSlice = createSlice({
         }
     },
     // all set changes are carried by this
-    applyGameState: (state, action: PayloadAction<Partial<GameStatePayload>>) => {
+    applyGameState: (state, action: PayloadAction<Partial<GameState>>) => {
       // Object.assign apply changes by comparing state versus action.payload 
       Object.assign(state, action.payload);
     },

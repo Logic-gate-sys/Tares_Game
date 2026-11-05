@@ -1,5 +1,5 @@
 import { type RoomCreateType } from "#types/entities";
-import { useState } from "react";
+import { type FormEvent, useState } from "react";
 import { ICONBG_CLASS, ICONTEXTCOLOR_CLSS, ICON_PRESETS } from '#components/constants';
 
 
@@ -19,7 +19,7 @@ type ModalProps = {
 export function CreateRoomModal({ onClose, onSubmit }: ModalProps) {
   const [data, setData] = useState<RoomCreateType>(getInitData);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!data.name.trim()) return;
     console.log("Data: ", data)

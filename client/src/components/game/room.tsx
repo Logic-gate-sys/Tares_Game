@@ -48,7 +48,7 @@ export const RoomCard = ({ data, isOwner, onJoin, onEnterOwnRoom, onOpenSettings
         {/* Player Avatars & Join Button */}
         <div className="flex items-center gap-4 w-full md:w-auto">
           <div className="flex -space-x-4">
-            {data.avatars.map((avatar, idx) => (
+            {(data.avatars ?? []).map((avatar, idx) => (
               <img
                 key={idx}
                 className={`w-10 h-10 rounded-full border-2 border-deep-ink ${avatar.bgClass || 'bg-sky-blue'}`}
@@ -56,9 +56,9 @@ export const RoomCard = ({ data, isOwner, onJoin, onEnterOwnRoom, onOpenSettings
                 alt={avatar.alt || 'Player avatar'}
               />
             ))}
-            {data.extraPlayersCount > 0 && (
+            {(data.extraPlayersCount ?? 0) > 0 && (
               <div className="w-10 h-10 rounded-full border-2 border-deep-ink bg-deep-ink flex items-center justify-center text-paper-white font-label-bold text-xs">
-                +{data.extraPlayersCount}
+                +{data.extraPlayersCount ?? 0}
               </div>
             )}
           </div>

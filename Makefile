@@ -63,6 +63,9 @@ user_db_generate:
 user_db_migrate:
 	cd backend/user_microservice && npm run db:migrate
 
+build:
+	cd backend/user_microservice && npm 
+
 # gRPC
 proto-go:
 	@mkdir -p backend/wss_microservice/pkg/userpb

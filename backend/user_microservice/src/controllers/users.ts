@@ -22,6 +22,10 @@ export async function getUserDetails(request: Request, response: Response): Prom
 
 export async function updateUserProfile(request: Request, response: Response): Promise<void> {
   try {
+    if (!request.authUser) {
+      response.status(401).json({ error: 'Authentication required' });
+      return;
+    }
     const { id } = request.authUser;
     const {...data} = request.body as UpdateUserInput;  
     const user = await updateUser(id, data);
@@ -68,5 +72,4 @@ export async function statsById(request: Request, response: Response): Promise<v
     response.status(500).json({ error: err })
   }
 };
-
 

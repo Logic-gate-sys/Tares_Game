@@ -33,8 +33,8 @@ export default defineConfig({
   },
 
   build: {
-    target: "ES2023",
-    minify: "terser",
+    target: "es2015",
+    minify: "esbuild",
     sourcemap: false,
   },
 });
