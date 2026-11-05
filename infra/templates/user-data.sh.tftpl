@@ -13,7 +13,7 @@ fi
 
 # Runtime only: no build tools, since images are built in GitHub Actions
 apt-get update -y
-apt-get install -y docker.io docker-compose-v2 git certbot fail2ban
+apt-get install -y docker.io docker-compose-v2 fail2ban
 systemctl enable --now docker
 usermod -aG docker ubuntu
 
@@ -27,9 +27,4 @@ EOF
 systemctl restart docker
 
 mkdir -p /opt/tares
-cat > /opt/tares/.env <<'ENVIRONMENT'
-%{ for key, value in bootstrap_environment ~}
-${key}=${value}
-%{ endfor ~}
-ENVIRONMENT
-chown ubuntu:ubuntu /opt/tares/.env
+chown ubuntu:ubuntu /opt/tares

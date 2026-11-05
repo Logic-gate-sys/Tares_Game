@@ -22,8 +22,8 @@ output "frontend_url" {
   value       = "http://${aws_s3_bucket_website_configuration.frontend.website_endpoint}"
 }
 
-# api_ip = "13.62.121.173"
+# api_ip = "16.171.221.169"
 # frontend_bucket = "tares-frontend-prod-12345"
 # frontend_url = "http://tares-frontend-prod-12345.s3-website.eu-north-1.amazonaws.com"
-# instance_id = "i-0e1f42bd2f9501ba5"
+# instance_id = "i-0854fb7a18bca4ac3"
 # ssh_command = <sensitive>

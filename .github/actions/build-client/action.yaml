@@ -1,6 +1,11 @@
 name: Build client
 description: Builds the frontend into client/dist and uploads it as the "dist" artifact.
 
+inputs:
+  api-url:
+    description: Public API base URL used at frontend build time.
+    required: true
+
 runs:
   using: composite
   steps:
@@ -12,9 +17,15 @@ runs:
     - run: npm ci
       shell: bash
       working-directory: client
+    - run: test -n "$VITE_BASE_URL"
+      shell: bash
+      env:
+        VITE_BASE_URL: ${{ inputs.api-url }}
     - run: npx vite build
       shell: bash
       working-directory: client
+      env:
+        VITE_BASE_URL: ${{ inputs.api-url }}
     - uses: actions/upload-artifact@v4
       with:
         name: dist

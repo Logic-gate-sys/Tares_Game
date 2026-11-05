@@ -47,20 +47,3 @@ variable "frontend_bucket_name" {
   type        = string
   description = "Globally unique S3 bucket name for the frontend"
 }
-
-variable "repo_url" {
-  type        = string
-  description = "Git URL of the repo. Must be public for the clone in user-data."
-  default     = ""
-}
-
-variable "repo_branch" {
-  type    = string
-  default = "main"
-}
-
-variable "bootstrap_environment" {
-  type        = map(string)
-  description = "Non-secret environment values written to the instance .env file. Pass with TF_VAR_bootstrap_environment."
-  default     = {}
-}
