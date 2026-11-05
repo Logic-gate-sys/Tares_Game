@@ -45,7 +45,7 @@ class APIClient {
     }
   }
 
-  public async patch<T>(url: string, data: T, config?: unknown): Promise<AxiosResponse> {
+  public async patch<T>(url: string, data: T, config?: AxiosRequestConfig): Promise<AxiosResponse> {
     try {
       return await this.client.patch<T>(url, data, config);
     } catch (err: unknown) {
@@ -58,7 +58,7 @@ class APIClient {
     }
   }
 
-  public async put<T>(url: string, data: T, config?: unknown): Promise<AxiosResponse> {
+  public async put<T>(url: string, data: T, config?: AxiosRequestConfig): Promise<AxiosResponse> {
     try {
       return await this.client.put<T>(url, data, config);
     } catch (err: unknown) {
@@ -71,7 +71,7 @@ class APIClient {
     }
   }
 
-  public async get<T>(url: string, config?: unknown): Promise<AxiosResponse> {
+  public async get<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse> {
     try {
       return await this.client.get<T>(url, config);
     } catch (err: unknown) {

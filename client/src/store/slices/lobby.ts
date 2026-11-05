@@ -44,11 +44,11 @@ export const lobbySlice = createSlice({
     removeRoom: (state, action: PayloadAction<{id: string}>) => {
       state.availableRooms = state.availableRooms.filter(rm=> rm.id !== action.payload.id)
     },
-    connectSocket: (state, action: PayloadAction<{ url: string }>) => { },
-    pushToLobby: (state, action: PayloadAction<ClientMessage>) => { },
-    addRequest: (state, action: PayloadAction<Request>) => { state.inComingRequests.push(action.payload) },
+    connectSocket: (_state, _action: PayloadAction<{ url: string }>) => { },
+    pushToLobby: (_state, _action: PayloadAction<ClientMessage>) => { },
+    addRequest: (state, action: PayloadAction<Request>) => { state.inComingRequests ??= []; state.inComingRequests.push(action.payload) },
     updateRequests: (state, action: PayloadAction<{ id: string }>) => {
-      state.inComingRequests = state.inComingRequests.filter((r) => r.id !== action.payload.id)
+      state.inComingRequests = (state.inComingRequests ?? []).filter((r) => r.id !== action.payload.id)
     },
     addMessage: (state, action: PayloadAction<string>)=> {state.message = action.payload},
 

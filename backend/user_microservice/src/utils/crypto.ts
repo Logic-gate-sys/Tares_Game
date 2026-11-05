@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import jwt, { type JwtPayload } from 'jsonwebtoken';
+import jwt, { type JwtPayload, type SignOptions } from 'jsonwebtoken';
 import { env } from '../env.ts';
 
 const passwordRounds = 12;
@@ -20,10 +20,18 @@ export function verifyPassword(password: string, storedHash: string): Promise<bo
 }
 
 export function createToken(payload: TokenClaims, expiresIn = 0): string {
+  const tokenExpiresIn: NonNullable<SignOptions["expiresIn"]> =
+    expiresIn >= 1
+      ? expiresIn
+      : env.JWT_EXPIRES_IN as NonNullable<SignOptions["expiresIn"]>;
+  const options: SignOptions = {
+    expiresIn: tokenExpiresIn,
+    algorithm: "HS256",
+  };
   return jwt.sign(
     {  ...payload,purpose:"authentication"},
     env.AUTH_SECRET,
-    { expiresIn: expiresIn >=1 ? expiresIn : env.JWT_EXPIRES_IN, algorithm: "HS256" }
+    options
   );
 }
 

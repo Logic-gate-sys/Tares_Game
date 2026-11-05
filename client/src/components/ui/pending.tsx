@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 interface TaresHeaderProps {
   pendingCount?: number;
   roomName?: string;
@@ -14,7 +12,6 @@ export function PendingRequestsHeader({
   roomNumber = 789,
   
 }: TaresHeaderProps) {
-   const [showAction, setShowAction] = useState()
   return (
     <header className="w-full bg-white border-[3px] border-[#121721] shadow-[6px_6px_0px_0px_#121721] p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
       <div className="flex items-center gap-3">

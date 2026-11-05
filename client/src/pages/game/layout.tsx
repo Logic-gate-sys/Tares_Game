@@ -8,7 +8,7 @@ import { PetitionCard } from "#components/ui/petition";
 import { pushToLobby, updateRequests } from "#store/slices/lobby";
 
 export function GameLobbyGate() {
-  const { socketStatus, inComingRequests, showMessages } = useSelector((state: RootState) => state.lobby);
+  const { socketStatus, inComingRequests = [], showMessages } = useSelector((state: RootState) => state.lobby);
   const { status, round} = useSelector((state: RootState) => state.arena)
   const dispatch = useDispatch();
   // Owner resolves  requestor's petition
@@ -27,10 +27,12 @@ export function GameLobbyGate() {
   };
 
   if (socketStatus && socketStatus === "connected") {
-    const progress = (round.roundNo / round.totalRound) * 100;
+    const roundNo = round?.roundNo ?? 0;
+    const totalRound = round?.totalRound ?? 1;
+    const progress = (roundNo / totalRound) * 100;
     return (
       <div className="h-fit">
-        <Header messages={inComingRequests?.length}
+        <Header messages={inComingRequests.length}
           arenaDetail={{ isIn: (status !== "idle"), name:"", progress: progress }}
           onShowMsg={() => dispatch(changeShowMsgStatus(!showMessages))} />
         <div className="mb-24 px-xl p-fit flex flex-col items-start">
@@ -68,8 +70,8 @@ export function GameLobbyGate() {
                       <PetitionCard
                         {...dt}
                         // Connect to the handler to remove the card and reveal the next
-                        onReject={() => handlePetitionAction(dt.id, 'rejected')}
-                        onResolve={() => handlePetitionAction(dt.id, 'resolved')}
+                        onReject={() => dt.id && handlePetitionAction(dt.id, 'rejected')}
+                        onResolve={() => dt.id && handlePetitionAction(dt.id, 'resolved')}
                       />
                     </div>
                   </div>

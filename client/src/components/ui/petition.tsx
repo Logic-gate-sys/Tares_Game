@@ -21,6 +21,7 @@ export interface PetitionCardProps {
 }
 
 export function PetitionCard(props: PetitionCardProps) {
+  const stats = props.stats ?? { wins: 0, accuracy: 0, ping: 0 };
 
   // Reusable Tailwind utility string for neobrutalist button interactions
   const brutalBtnClass = "transition-all duration-100 hover:-translate-y-[2px] hover:-translate-x-[2px] hover:shadow-[5px_5px_0px_0px_#121721] active:translate-y-[2px] active:translate-x-[2px] active:shadow-[1px_1px_0px_0px_#121721]";
@@ -64,12 +65,12 @@ export function PetitionCard(props: PetitionCardProps) {
               <div className="flex items-center gap-3 mt-1 font-mono text-xs text-gray-600">
                 <span className="flex items-center gap-1 font-bold text-black">
                   <span className="material-symbols-outlined text-sm text-[#ec2513]">trophy</span>
-                  {props.stats.wins} Wins
+                  {stats.wins} Wins
                 </span>
                 <span>•</span>
-                <span className="font-bold text-black">{props.stats.accuracy}% Acc</span>
+                <span className="font-bold text-black">{stats.accuracy}% Acc</span>
                 <span>•</span>
-                <span className="text-green-700 font-bold">Ping: {props.stats.ping}ms</span>
+                <span className="text-green-700 font-bold">Ping: {stats.ping}ms</span>
               </div>
             </div>
           </div>

@@ -55,7 +55,7 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: backend/user_microservice/package-lock.json
-      - run: npm ci npm ci --legacy-peer-deps
+      - run: npm ci --legacy-peer-deps
       - run: npm run typecheck
       - run: npm test -- --run
 

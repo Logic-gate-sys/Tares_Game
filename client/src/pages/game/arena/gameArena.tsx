@@ -18,6 +18,7 @@ export function Arena() {
   const playerId = user?.id !== undefined ? String(user.id) : '';
   const playerWords = wordCounts?.[playerId] ?? 0;
   const totalWords = Object.values(wordCounts ?? {}).reduce((total, count) => total + count, 0);
+  const activeStats = activeUserStats ?? {};
 
   // Apply body classes on mount if not handled globally in index.html
   useEffect(() => {
@@ -40,27 +41,27 @@ export function Arena() {
             round={round?.roundNo}
             scramble={scramble}
             onStart={() => {
-              dispatch(pushToGameRoom({ type: 'in:game', payload: { action: 'START_GAME', value: { userId: user.id } } }));
+              if (user) dispatch(pushToGameRoom({ type: 'in:game', payload: { action: 'START_GAME', value: { userId: user.id } } }));
             }}
             onPause={() => {
               dispatch(pushToGameRoom({
                 type: 'in:game',
                 payload: {
                   action: gameState === 'PAUSED' ? 'RESUME_GAME' : 'PAUSE_GAME',
-                  value: { userId: user.id },
+                  value: { userId: user?.id ?? 0 },
                 },
               }));
             }}
             onRestart={() => {
               dispatch(pushToGameRoom({
                 type: 'in:game',
-                payload: { action: 'RESTART_GAME', value: { userId: user.id } },
+                payload: { action: 'RESTART_GAME', value: { userId: user?.id ?? 0 } },
               }));
             }}
             onLeave={() => {
               dispatch(pushToGameRoom({
                 type: 'in:game',
-                payload: { action: 'LEAVE_GAME', value: { userId: user.id } },
+                payload: { action: 'LEAVE_GAME', value: { userId: user?.id ?? 0 } },
               }));
               navigate('/game/lobby');
             }}
@@ -68,7 +69,7 @@ export function Arena() {
               type: 'in:game', payload: { action: 'SEND_WORD', value: { word } }
             }))}
           />
-          <PlayerStats score={activeUserStats.score??0} rank={activeUserStats.rank} words={playerWords} totalWords={totalWords} />
+          <PlayerStats score={activeStats.score ?? 0} rank={Number(activeStats.rank) || 0} words={playerWords} totalWords={totalWords} />
         </div>
       </main>
     </>

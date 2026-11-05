@@ -19,6 +19,7 @@ export function Lobby() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { availableRooms, message } = useSelector((state: RootState) => state.lobby)
+  const incomingMessage = message ?? "";
   const { user } = useSelector((state: RootState) => state.auth);
   const { room, status } = useSelector((state: RootState) => state.arena);
   const { showNotice } = useUI();
@@ -51,7 +52,7 @@ export function Lobby() {
     try {
       await updateRoom(data).unwrap();
       setOpenRoomSettings(false);
-      dispatch(pushToLobby({ type: 'in:lobby', payload: { action: 'room:update', value: { name: data.name } } }));
+      dispatch(pushToLobby({ type: 'in:lobby', payload: { action: 'room:update', value: { name: data.name ?? "" } } }));
       showNotice("Success", "Room updated successfully")
     } catch (err: unknown) {
       console.log("error: ", err)
@@ -94,8 +95,8 @@ export function Lobby() {
   }
   // when owner wants to enter their own Room
   const handleEnterOwnRoom = (e: React.MouseEvent | undefined, roomId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e?.preventDefault();
+    e?.stopPropagation();
     if (!roomId) return;
     dispatch(pushToLobby({
       type: 'in:lobby',
@@ -112,7 +113,7 @@ export function Lobby() {
     if (status === "room:in" && room ) {
       navigate("/game/arena");
     } else if (status === "room:out") {
-      showNotice("Notice", message);
+      showNotice("Notice", incomingMessage);
     }
   }, [room, status, message]);
 
@@ -228,15 +229,15 @@ export function Lobby() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-paper-white p-4 border-2 border-paper-white text-deep-ink text-center">
                   <p className="text-label-mono font-label-mono text-xs uppercase opacity-70">WINS</p>
-                  <p className="text-headline-md font-headline-md">{user.wins}</p>
+                  <p className="text-headline-md font-headline-md">{user?.wins ?? 0}</p>
                 </div>
                 <div className="bg-action-red p-4 border-2 border-paper-white text-paper-white text-center">
                   <p className="text-label-mono font-label-mono text-xs uppercase opacity-70">LEVEL</p>
-                  <p className="text-headline-md font-headline-md">{user.rank}</p>
+                  <p className="text-headline-md font-headline-md">{user?.rank ?? "--"}</p>
                 </div>
                 <div className="col-span-2 bg-sky-blue p-4 border-2 border-paper-white text-deep-ink flex justify-between items-center">
                   <p className="text-label-bold font-label-bold">ACCURACY</p>
-                  <p className="text-headline-md font-headline-md">{user.accuracy}%</p>
+                  <p className="text-headline-md font-headline-md">{user?.accuracy ?? 0}%</p>
                 </div>
               </div>
             </div>
@@ -262,7 +263,7 @@ export function Lobby() {
         {/*--------------- MODAL FORM -----------------*/}
         {openModal && (<CreateRoomModal onClose={() => setOpenModal(false)} onSubmit={handleCreateRoom} />)}
         {openDelete && <DeleteModal title={selectedRoom?.name ?? ""} onClose={() => setOpenDelete(false)} onConfirm={handleDeleteRoom} />}
-        {openRoomSettings && <SettingsModal room={selectedRoom} onClose={() => setOpenRoomSettings(false)} onSave={handleUpdateRoom} />}
+        {openRoomSettings && <SettingsModal room={selectedRoom ?? undefined} onClose={() => setOpenRoomSettings(false)} onSave={handleUpdateRoom} />}
 
       </main>
     </div>
