@@ -31,9 +31,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Normalize GHCR owner
+        id: ghcr
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: echo "registry=ghcr.io/$(printf '%s' "$OWNER" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
       - uses: ./.github/actions/build_backend
         with:
-          registry: ghcr.io/${{ github.repository_owner }}
+          registry: ${{ steps.ghcr.outputs.registry }}
           tag: ${{ github.sha }}
           push: "true"
 
@@ -68,6 +74,7 @@ jobs:
           ALLOWED_ORIGINS: ${{ vars.FRONTEND_URL }}
         run: |
           set -euo pipefail
+          IMAGE_OWNER=$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
           encode() { base64 -w0 "$1"; }
           compose_b64=$(encode docker-compose.yaml)
           prod_b64=$(encode docker-compose.prod.yaml)
@@ -75,8 +82,8 @@ jobs:
           username_b64=$(printf '%s' "$GHCR_USERNAME" | base64 -w0)
           token_b64=$(printf '%s' "$GHCR_READ_TOKEN" | base64 -w0)
           env_file=$(printf '%s\n' \
-            "USER_SERVICE_IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER}/tares-user-service:${GITHUB_SHA}" \
-            "WSS_SERVICE_IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER}/tares-wss-service:${GITHUB_SHA}" \
+            "USER_SERVICE_IMAGE=ghcr.io/${IMAGE_OWNER}/tares-user-service:${GITHUB_SHA}" \
+            "WSS_SERVICE_IMAGE=ghcr.io/${IMAGE_OWNER}/tares-wss-service:${GITHUB_SHA}" \
             "USER_DB_USER=${USER_DB_USER}" "USER_DB_PASSWORD=${USER_DB_PASSWORD}" \
             "USER_DB_NAME=${USER_DB_NAME}" "GAME_DB_USER=${GAME_DB_USER}" \
             "GAME_DB_PASSWORD=${GAME_DB_PASSWORD}" "GAME_DB_NAME=${GAME_DB_NAME}" \
