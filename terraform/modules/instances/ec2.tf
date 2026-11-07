@@ -1,12 +1,21 @@
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
+  }
+  owners = ["099720109477"]
+}
+
 resource "aws_key_pair" "admin" {
-  key_name   = "${local.name}-admin"
+  key_name   = "${var.name}-admin"
   public_key = file(pathexpand(var.public_key_path))
 }
 
 resource "aws_security_group" "app" {
-  name        = "${local.name}-app"
+  name        = "${var.name}-app"
   description = "SSH from admin IP; HTTP and HTTPS from anywhere"
-  vpc_id      = data.aws_vpc.default.id
+  vpc_id      = var.vpc_id
 
   ingress {
     description = "SSH from admin"
@@ -40,20 +49,23 @@ resource "aws_security_group" "app" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = { Name = "${local.name}-app" }
+  tags = { Name = "${var.name}-app" }
 }
 
 resource "aws_instance" "app" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.instance_type
   key_name               = aws_key_pair.admin.key_name
+  subnet_id              = var.public_subnet_id
   vpc_security_group_ids = [aws_security_group.app.id]
+  iam_instance_profile   = var.iam_instance_profile_name
 
-  user_data = file("${path.module}/templates/user-data.sh.tftpl")
-
+  user_data = templatefile("${path.module}/templates/user-data.sh.tftpl", {
+    bootstrap_environment = var.bootstrap_environment
+  })
 
   root_block_device {
-    volume_size = 30 # Holds the Postgres data. 30 GB is the free-tier EBS limit.
+    volume_size = 30 # Holds the Postgres data
     volume_type = "gp3"
   }
 
@@ -66,12 +78,12 @@ resource "aws_instance" "app" {
     ignore_changes = [ami, user_data]
   }
 
-  tags = { Name = "${local.name}-app" }
+  tags = { Name = "${var.name}-app" }
 }
 
 resource "aws_eip" "app" {
   domain   = "vpc"
   instance = aws_instance.app.id
 
-  tags = { Name = "${local.name}-app" }
+  tags = { Name = "${var.name}-app" }
 }
