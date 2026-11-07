@@ -1,6 +1,12 @@
 variable "region" {
-  type    = string
-  default = "us-east-1"
+  description = "AWS Region for the entire infrastructure. This is defaulted to 'eu-north-1'"
+  type        = string
+  default     = "eu-north-1"
+}
+variable "cidr_range" {
+  type        = string
+  description = "VPC CIDR Range for private IP assignment in VPC"
+  default     = "10.0.0.0/16"
 }
 
 variable "project_name" {
@@ -46,4 +52,11 @@ variable "instance_type" {
 variable "frontend_bucket_name" {
   type        = string
   description = "Globally unique S3 bucket name for the frontend"
+}
+
+
+variable "bootstrap_environment" {
+  type        = string
+  description = "Environment name passed to the user-data bootstrap script"
+  default     = "prod"
 }

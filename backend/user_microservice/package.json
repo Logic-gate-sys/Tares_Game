@@ -2,16 +2,8 @@
   "name": "user_microservice",
   "version": "1.0.0",
   "description": "A microservice for user related operations in the tares game platform ",
-  "keywords": [
-    "User",
-    "Auth",
-    "Sercurity",
-    "Isolation"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "github.com/logic-gate-sys/tares_cli"
-  },
+  "keywords": [ "User","Auth", "Sercurity","Isolation"],
+  "repository": { "type": "git", "url": "github.com/logic-gate-sys/tares_cli"},
   "license": "ISC",
   "author": "Logic Gate",
   "type": "module",

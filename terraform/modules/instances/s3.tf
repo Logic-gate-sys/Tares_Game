@@ -2,7 +2,8 @@ resource "aws_s3_bucket" "frontend" {
   bucket = var.frontend_bucket_name
 }
 
-# Static website hosting requires a public bucket. The policy below grants only s3:GetObject.
+# Static website hosting requires a public bucket. 
+# The policy below grants only s3:GetObject.
 resource "aws_s3_bucket_public_access_block" "frontend" {
   bucket                  = aws_s3_bucket.frontend.id
   block_public_acls       = false
@@ -45,8 +46,10 @@ resource "aws_s3_bucket_policy" "frontend" {
 
 
 // Backup S3 bucket 
+data "aws_caller_identity" "current" {}
+
 resource "aws_s3_bucket" "db_backups" {
-  bucket = "${local.name}-db-backups-${data.aws_caller_identity.current.account_id}"
+  bucket = "${var.name}-db-backups-${data.aws_caller_identity.current.account_id}"
 }
 
 resource "aws_s3_bucket_public_access_block" "db_backups" {

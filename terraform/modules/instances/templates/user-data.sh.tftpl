@@ -2,7 +2,6 @@
 set -eo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
-# Swap for a 2 GB instance
 if [ ! -f /swapfile ]; then
   fallocate -l 4G /swapfile
   chmod 600 /swapfile
@@ -11,13 +10,11 @@ if [ ! -f /swapfile ]; then
   echo '/swapfile none swap sw 0 0' >> /etc/fstab
 fi
 
-# Runtime only: no build tools, since images are built in GitHub Actions
 apt-get update -y
 apt-get install -y docker.io docker-compose-v2 fail2ban
 systemctl enable --now docker
 usermod -aG docker ubuntu
 
-# Cap container logs so they can't fill the disk
 cat > /etc/docker/daemon.json <<'EOF'
 {
   "log-driver": "json-file",
