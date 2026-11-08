@@ -71,6 +71,7 @@ jobs:
           GAME_DB_PASSWORD: ${{ secrets.GAME_DB_PASSWORD }}
           GAME_DB_NAME: ${{ secrets.GAME_DB_NAME }}
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
           ALLOWED_ORIGINS: ${{ vars.FRONTEND_URL }}
         run: |
           set -euo pipefail
@@ -87,7 +88,12 @@ jobs:
             "USER_DB_USER=${USER_DB_USER}" "USER_DB_PASSWORD=${USER_DB_PASSWORD}" \
             "USER_DB_NAME=${USER_DB_NAME}" "GAME_DB_USER=${GAME_DB_USER}" \
             "GAME_DB_PASSWORD=${GAME_DB_PASSWORD}" "GAME_DB_NAME=${GAME_DB_NAME}" \
-            "AUTH_SECRET=${AUTH_SECRET}" "ALLOWED_ORIGINS=${ALLOWED_ORIGINS}")
+            "AUTH_SECRET=${AUTH_SECRET}" "CLOUDINARY_URL=${CLOUDINARY_URL}" \
+            "ALLOWED_ORIGINS=${ALLOWED_ORIGINS}" \
+            "NODE_ENV=production" "SERVER_PORT=3000" "JWT_EXPIRES_IN=7d" \
+            "WSS_PORT=8081" "USER_GRPC_ADDR=user-service:50051" \
+            "USER_SERVICE_URL=http://user-service:3000" \
+            "DICTIONARY_FILEPATH=game_words.txt")
           env_b64=$(printf '%s' "$env_file" | base64 -w0)
           command=$(jq -n \
             --arg compose "$compose_b64" --arg prod "$prod_b64" --arg nginx "$nginx_b64" \
@@ -99,8 +105,10 @@ jobs:
               ("echo " + $nginx + " | base64 -d > /opt/tares/nginx.conf"),
               ("echo " + $env + " | base64 -d > /opt/tares/.env"),
               ("echo " + $token + " | base64 -d | docker login ghcr.io --username \"$(echo " + $user + " | base64 -d)\" --password-stdin"),
+              "cd /opt/tares && docker compose --env-file .env -f docker-compose.yaml -f docker-compose.prod.yaml --profile prod config --quiet",
               "cd /opt/tares && docker compose --env-file .env -f docker-compose.yaml -f docker-compose.prod.yaml --profile prod pull",
-              "cd /opt/tares && docker compose --env-file .env -f docker-compose.yaml -f docker-compose.prod.yaml --profile prod up -d --remove-orphans"
+              "cd /opt/tares && docker compose --env-file .env -f docker-compose.yaml -f docker-compose.prod.yaml --profile prod up -d --remove-orphans",
+              "cd /opt/tares && docker compose --env-file .env -f docker-compose.yaml -f docker-compose.prod.yaml --profile prod ps"
             ]}')
           command_id=$(aws ssm send-command --instance-ids "$INSTANCE_ID" \
             --document-name AWS-RunShellScript --parameters "$command" \

@@ -14,8 +14,11 @@ services:
     env_file: !reset []
     environment:
       NODE_ENV: production
+      SERVER_PORT: ${SERVER_PORT:-3000}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       DATABASE_URL: postgresql://${USER_DB_USER}:${USER_DB_PASSWORD}@user-db:5432/${USER_DB_NAME}
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
+      CLOUDINARY_URL: ${CLOUDINARY_URL:?CLOUDINARY_URL is required}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?ALLOWED_ORIGINS is required}
     ports: !reset []
     restart: unless-stopped
@@ -24,6 +27,10 @@ services:
     build: !reset null
     env_file: !reset []
     environment:
+      WSS_PORT: ${WSS_PORT:-8081}
+      USER_GRPC_ADDR: ${USER_GRPC_ADDR:-user-service:50051}
+      USER_SERVICE_URL: ${USER_SERVICE_URL:-http://user-service:3000}
+      DICTIONARY_FILEPATH: ${DICTIONARY_FILEPATH:-game_words.txt}
       DATABASE_URL: postgresql://${GAME_DB_USER}:${GAME_DB_PASSWORD}@game-db:5432/${GAME_DB_NAME}?sslmode=disable
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?ALLOWED_ORIGINS is required}
